@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle, ChefHat, Loader } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../../store";
 
 const steps = [
@@ -13,13 +14,13 @@ const steps = [
 ];
 
 export const CookingScreen = () => {
+  const navigate = useNavigate();
   const { 
     selectedRecipe, 
     cookingProgress, 
     setCookingProgress, 
-    cookingStep, 
     setCookingStep, 
-    setCurrentScreen,
+    cookingStep,
     cookingQueue,
     processNextQueueItem
   } = useAppStore();
@@ -66,7 +67,7 @@ export const CookingScreen = () => {
           setIsProcessingQueue(true);
           processNextQueueItem();
         } else {
-          setCurrentScreen('rating');
+          navigate('/rating');
         }
       }, 2000);
     }, totalDuration);
@@ -77,7 +78,7 @@ export const CookingScreen = () => {
       stepTimeouts.forEach(timeout => clearTimeout(timeout));
       clearTimeout(completionTimer);
     };
-  }, [selectedRecipe, setCookingProgress, setCookingStep, setCurrentScreen, cookingQueue, processNextQueueItem]);
+  }, [selectedRecipe, setCookingProgress, setCookingStep, navigate, cookingQueue, processNextQueueItem]);
 
   if (!selectedRecipe) {
     return (

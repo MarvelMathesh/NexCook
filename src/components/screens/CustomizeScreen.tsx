@@ -1,12 +1,26 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Droplets, Flame, Salad as Salt, Utensils, ShoppingBag } from "lucide-react";
+import { useParams } from "react-router-dom";
 import { useAppStore } from "../../store";
+import { useNavigation } from "../../hooks/useNavigation";
 
 export const CustomizeScreen = () => {
-  const { selectedRecipe, customization, updateCustomization, setCurrentScreen, startCooking, addToCart } = useAppStore();
+  const { id } = useParams<{ id: string }>();
+  const { recipes, selectedRecipe, selectRecipe, customization, updateCustomization, startCooking, addToCart } = useAppStore();
+  const { goToRecipeDetails, goToCooking } = useNavigation();
   const [quantity, setQuantity] = useState(1);
   const [addToCartAnimation, setAddToCartAnimation] = useState(false);
+
+  // Load recipe by ID if not already selected
+  useEffect(() => {
+    if ((!selectedRecipe || selectedRecipe.id !== id) && id) {
+      const recipe = recipes.find(r => r.id === id);
+      if (recipe) {
+        selectRecipe(recipe);
+      }
+    }
+  }, [id, recipes, selectedRecipe, selectRecipe]);
 
   if (!selectedRecipe) {
     return (
@@ -22,6 +36,11 @@ export const CustomizeScreen = () => {
     setTimeout(() => setAddToCartAnimation(false), 500);
   };
 
+  const handleStartCooking = () => {
+    startCooking();
+    goToCooking();
+  };
+
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-black to-purple-950 px-4 py-6 text-white">
       <motion.div
@@ -30,7 +49,7 @@ export const CustomizeScreen = () => {
         className="mb-8 flex items-center"
       >
         <button 
-          onClick={() => setCurrentScreen('recipe-details')}
+          onClick={() => goToRecipeDetails(selectedRecipe.id)}
           className="mr-4 rounded-full bg-white/10 p-2 hover:bg-white/20"
         >
           <ArrowLeft size={20} />
@@ -216,7 +235,7 @@ export const CustomizeScreen = () => {
             
             <button
               className="h-12 w-1/3 rounded-xl bg-purple-600 py-3 font-medium text-white"
-              onClick={startCooking}
+              onClick={handleStartCooking}
             >
               Cook Now
             </button>

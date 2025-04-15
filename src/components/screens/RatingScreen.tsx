@@ -2,16 +2,18 @@ import React from "react";
 import { motion } from "framer-motion";
 import { ChefHat, Star } from "lucide-react";
 import { useAppStore } from "../../store";
+import { useNavigation } from "../../hooks/useNavigation";
 import { Sparkles } from "../ui/SparklesEffect";
 
 export const RatingScreen = () => {
-  const { selectedRecipe, ratingValue, setRating, setCurrentScreen, resetCooking } = useAppStore();
+  const { selectedRecipe, ratingValue, setRating, resetCooking } = useAppStore();
+  const { goToHome } = useNavigation();
 
   const handleSubmitRating = () => {
     // Here we would save the rating to the recipe in a real app
     setTimeout(() => {
       resetCooking();
-      setCurrentScreen('home');
+      goToHome();
     }, 1000);
   };
 
@@ -112,7 +114,7 @@ export const RatingScreen = () => {
           <button
             onClick={() => {
               resetCooking();
-              setCurrentScreen('home');
+              goToHome();
             }}
             className="w-full rounded-xl border border-white/20 bg-transparent py-3 text-white transition-all hover:bg-white/10"
           >

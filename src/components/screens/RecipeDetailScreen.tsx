@@ -1,12 +1,26 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Clock, Star, ChefHat, Thermometer, Utensils, ShoppingBag } from "lucide-react";
+import { useParams } from "react-router-dom";
 import { useAppStore } from "../../store";
+import { useNavigation } from "../../hooks/useNavigation";
 
 export const RecipeDetailScreen = () => {
-  const { selectedRecipe, setCurrentScreen, customization, addToCart } = useAppStore();
+  const { id } = useParams<{ id: string }>();
+  const { recipes, selectedRecipe, selectRecipe, customization, addToCart } = useAppStore();
+  const { goToRecipes, goToCustomize } = useNavigation();
   const [quantity, setQuantity] = useState(1);
   const [addToCartAnimation, setAddToCartAnimation] = useState(false);
+
+  // Load recipe by ID if not already selected
+  useEffect(() => {
+    if (!selectedRecipe && id) {
+      const recipe = recipes.find(r => r.id === id);
+      if (recipe) {
+        selectRecipe(recipe);
+      }
+    }
+  }, [id, recipes, selectedRecipe, selectRecipe]);
 
   if (!selectedRecipe) {
     return (
@@ -37,13 +51,13 @@ export const RecipeDetailScreen = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="absolute left-4 top-4 rounded-full bg-black/50 p-2 backdrop-blur-sm"
-          onClick={() => setCurrentScreen('recipes')}
+          onClick={goToRecipes}
         >
           <ArrowLeft size={20} />
         </motion.button>
       </div>
 
-      <div className="relative -mt-16 rounded-t-[2rem] bg-black px-6 pt-6">
+      <div className="relative -mt-16 rounded-t-[2rem] bg-black px-6 pt-6 pb-16">
         <motion.div 
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -102,7 +116,7 @@ export const RecipeDetailScreen = () => {
           initial={{ y: 40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.5 }}
-          className="mb-24"
+          className="mb-12"
         >
           <h2 className="mb-2 flex items-center gap-2 text-xl font-semibold">
             <span>Cooking Process</span>
@@ -154,7 +168,7 @@ export const RecipeDetailScreen = () => {
             
             <button
               className="h-12 w-1/3 rounded-xl bg-purple-600 py-3 font-medium text-white"
-              onClick={() => setCurrentScreen('customize')}
+              onClick={() => goToCustomize(selectedRecipe.id)}
             >
               Customize & Cook
             </button>

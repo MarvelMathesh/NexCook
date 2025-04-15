@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity, AlertCircle, Check, CoffeeIcon, Droplets, Flame, Menu, Soup, Utensils } from "lucide-react";
+import { Activity, AlertCircle, Check, CoffeeIcon, Droplets, Flame, Soup, Utensils } from "lucide-react";
 import { useAppStore } from "../store";
 import { Sidebar } from "./ui/Sidebar";
 
@@ -48,15 +48,6 @@ export const ModuleStatusPanel = () => {
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
       />
-
-      <motion.button
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="fixed left-4 top-4 z-50 rounded-full bg-black/50 p-3 backdrop-blur-md"
-        onClick={toggleSidebar}
-      >
-        <Menu size={20} className="text-white" />
-      </motion.button>
 
       <motion.button
         initial={{ opacity: 0, scale: 0.8 }}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAppStore } from './store';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { HomeScreen } from './components/screens/HomeScreen';
 import { RecipesScreen } from './components/screens/RecipesScreen';
 import { RecipeDetailScreen } from './components/screens/RecipeDetailScreen';
@@ -11,22 +11,24 @@ import { ModuleStatusPanel } from './components/ModuleStatusPanel';
 import { CartButton } from './components/CartButton';
 
 function App() {
-  const { currentScreen } = useAppStore();
-
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Current Screen */}
-      {currentScreen === 'home' && <HomeScreen />}
-      {currentScreen === 'recipes' && <RecipesScreen />}
-      {currentScreen === 'recipe-details' && <RecipeDetailScreen />}
-      {currentScreen === 'customize' && <CustomizeScreen />}
-      {currentScreen === 'cooking' && <CookingScreen />}
-      {currentScreen === 'rating' && <RatingScreen />}
-      {currentScreen === 'cart' && <CartScreen />}
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<HomeScreen />} />
+          <Route path="/recipes" element={<RecipesScreen />} />
+          <Route path="/recipe/:id" element={<RecipeDetailScreen />} />
+          <Route path="/customize/:id" element={<CustomizeScreen />} />
+          <Route path="/cooking" element={<CookingScreen />} />
+          <Route path="/rating" element={<RatingScreen />} />
+          <Route path="/cart" element={<CartScreen />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
 
-      {/* Global Components */}
-      <ModuleStatusPanel />
-      <CartButton />
+        {/* Global Components */}
+        <ModuleStatusPanel />
+        <CartButton />
+      </BrowserRouter>
     </div>
   );
 }

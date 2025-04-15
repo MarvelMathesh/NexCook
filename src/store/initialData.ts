@@ -91,7 +91,7 @@ export const initialRecipes: Recipe[] = [
       "Simmering the soup for enhanced flavor",
       "Final seasoning adjustments"
     ],
-    imageUrl: "https://images.unsplash.com/photo-1547592166-23ac45744acd?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+    imageUrl: "/assets/images/tomato-soup.jpg",
     rating: 4.5,
     timesCooked: 128
   },
@@ -131,7 +131,7 @@ export const initialRecipes: Recipe[] = [
       "Simmering for enhanced flavor",
       "Final seasoning adjustments"
     ],
-    imageUrl: "https://images.unsplash.com/photo-1616501376977-35362a563295?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+    imageUrl: "/assets/images/spinach-soup.jpg",
     rating: 4.2,
     timesCooked: 85
   },
@@ -171,7 +171,7 @@ export const initialRecipes: Recipe[] = [
       "Simmering for enhanced flavor",
       "Final seasoning and tempering"
     ],
-    imageUrl: "https://images.unsplash.com/photo-1574226516831-e1dff420e562?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+    imageUrl: "/assets/images/tur-dal.jpg",
     rating: 4.7,
     timesCooked: 156
   },
@@ -211,7 +211,7 @@ export const initialRecipes: Recipe[] = [
       "Simmering for enhanced flavor",
       "Final seasoning and tempering"
     ],
-    imageUrl: "https://images.unsplash.com/photo-1656155402982-5c8b7a84dcf2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+    imageUrl: "/assets/images/masoor-dal.jpg",
     rating: 4.4,
     timesCooked: 112
   }

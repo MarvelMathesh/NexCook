@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { useAppStore } from "../../store";
+import { useNavigation } from "../../hooks/useNavigation";
 
 export const CartScreen = () => {
-  const { cart, recipes, setCurrentScreen, removeFromCart, updateCartItem, clearCart, startCookingQueue } = useAppStore();
+  const { cart, recipes, removeFromCart, updateCartItem, clearCart, startCookingQueue } = useAppStore();
+  const { goToRecipes, goToCooking } = useNavigation();
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleStartCooking = () => {
@@ -12,6 +14,7 @@ export const CartScreen = () => {
     // Simulating a short delay as if we're processing the request
     setTimeout(() => {
       startCookingQueue();
+      goToCooking();
       setIsProcessing(false);
     }, 1000);
   };
@@ -26,7 +29,7 @@ export const CartScreen = () => {
         className="mb-8 flex items-center"
       >
         <button 
-          onClick={() => setCurrentScreen('recipes')}
+          onClick={goToRecipes}
           className="mr-4 rounded-full bg-white/10 p-2 hover:bg-white/20"
         >
           <ArrowLeft size={20} />
@@ -51,7 +54,7 @@ export const CartScreen = () => {
           <h2 className="mb-2 text-xl font-medium">Your cooking queue is empty</h2>
           <p className="mb-6 text-gray-400">Add some recipes to your queue to start cooking</p>
           <button 
-            onClick={() => setCurrentScreen('recipes')}
+            onClick={goToRecipes}
             className="rounded-full bg-purple-600 px-6 py-3 font-medium text-white transition-all hover:bg-purple-700"
           >
             Browse Recipes

@@ -2,13 +2,15 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Clock, Star } from "lucide-react";
 import { useAppStore } from "../../store";
+import { useNavigation } from "../../hooks/useNavigation";
 import { Card3D } from "../ui/Card3D";
 import { CardSpotlight } from "../ui/CardSpotlight";
 import { TextGenerateEffect } from "../ui/TextGenerateEffect";
 import { containerVariants, itemVariants } from "../../utils/animations";
 
 export const RecipesScreen = () => {
-  const { recipes, setCurrentScreen, selectRecipe } = useAppStore();
+  const { recipes } = useAppStore();
+  const { goToHome, handleRecipeSelect } = useNavigation();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const categories = [...new Set(recipes.map(recipe => recipe.category))];
@@ -16,11 +18,6 @@ export const RecipesScreen = () => {
   const filteredRecipes = selectedCategory
     ? recipes.filter(recipe => recipe.category === selectedCategory)
     : recipes;
-
-  const handleRecipeSelect = (recipe) => {
-    selectRecipe(recipe);
-    setCurrentScreen('recipe-details');
-  };
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-black to-purple-950 p-6 pb-24 text-white">
@@ -30,7 +27,7 @@ export const RecipesScreen = () => {
         className="mb-8 flex items-center"
       >
         <button 
-          onClick={() => setCurrentScreen('home')}
+          onClick={goToHome}
           className="mr-4 rounded-full bg-white/10 p-2 hover:bg-white/20"
         >
           <ArrowLeft size={20} />

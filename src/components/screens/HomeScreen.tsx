@@ -5,11 +5,11 @@ import { BackgroundBeams } from "../ui/BackgroundBeams";
 import { Sparkles } from "../ui/SparklesEffect";
 import { FlipWords } from "../ui/FlipWords";
 import { TextGenerateEffect } from "../ui/TextGenerateEffect";
-import { useAppStore } from "../../store";
+import { useNavigation } from "../../hooks/useNavigation";
 import { containerVariants, itemVariants } from "../../utils/animations";
 
 export const HomeScreen = () => {
-  const { setCurrentScreen } = useAppStore();
+  const { goToRecipes } = useNavigation();
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
@@ -86,7 +86,7 @@ export const HomeScreen = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8, duration: 0.5 }}
           className="mt-12 flex flex-col items-center"
-          onClick={() => setCurrentScreen('recipes')}
+          onClick={goToRecipes}
         >
           <span className="mb-2 rounded-full bg-purple-500 px-6 py-3 font-medium text-white transition-all hover:bg-purple-600">
             Start Cooking
