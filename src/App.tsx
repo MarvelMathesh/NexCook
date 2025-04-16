@@ -9,26 +9,29 @@ import { RatingScreen } from './components/screens/RatingScreen';
 import { CartScreen } from './components/screens/CartScreen';
 import { ModuleStatusPanel } from './components/ModuleStatusPanel';
 import { CartButton } from './components/CartButton';
+import { FirebaseProvider } from './components/FirebaseProvider';
 
 function App() {
   return (
     <div className="min-h-screen bg-black text-white">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<HomeScreen />} />
-          <Route path="/recipes" element={<RecipesScreen />} />
-          <Route path="/recipe/:id" element={<RecipeDetailScreen />} />
-          <Route path="/customize/:id" element={<CustomizeScreen />} />
-          <Route path="/cooking" element={<CookingScreen />} />
-          <Route path="/rating" element={<RatingScreen />} />
-          <Route path="/cart" element={<CartScreen />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+      <FirebaseProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<HomeScreen />} />
+            <Route path="/recipes" element={<RecipesScreen />} />
+            <Route path="/recipe/:id" element={<RecipeDetailScreen />} />
+            <Route path="/customize/:id" element={<CustomizeScreen />} />
+            <Route path="/cooking" element={<CookingScreen />} />
+            <Route path="/rating" element={<RatingScreen />} />
+            <Route path="/cart" element={<CartScreen />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
 
-        {/* Global Components */}
-        <ModuleStatusPanel />
-        <CartButton />
-      </BrowserRouter>
+          {/* Global Components */}
+          <ModuleStatusPanel />
+          <CartButton />
+        </BrowserRouter>
+      </FirebaseProvider>
     </div>
   );
 }
