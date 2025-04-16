@@ -169,6 +169,16 @@ export const useAppStore = create<AppState & {
   }),
   
   startCooking: () => set((state) => {
+    // Check if any module is in critical state
+    const hasCriticalModule = state.modules.some(module => module.status === "critical");
+    
+    // If any module is critical, prevent cooking and return current state
+    if (hasCriticalModule) {
+      // Could add a notification or alert here
+      console.warn("Cannot start cooking: One or more modules are empty and need refilling");
+      return state; // Return unchanged state
+    }
+    
     const updatedModules = [...state.modules];
     const moduleUpdates: {id: string, data: Partial<Module>}[] = [];
     
