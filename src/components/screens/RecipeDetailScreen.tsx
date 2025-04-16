@@ -4,6 +4,7 @@ import { ArrowLeft, Clock, Star, ChefHat, Thermometer, Utensils, ShoppingBag } f
 import { useParams } from "react-router-dom";
 import { useAppStore } from "../../store";
 import { useNavigation } from "../../hooks/useNavigation";
+import { PaymentQRModal } from "../PaymentQRModal";
 
 export const RecipeDetailScreen = () => {
   const { id } = useParams<{ id: string }>();
@@ -11,6 +12,7 @@ export const RecipeDetailScreen = () => {
   const { goToRecipes, goToCustomize } = useNavigation();
   const [quantity, setQuantity] = useState(1);
   const [addToCartAnimation, setAddToCartAnimation] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // Load recipe by ID if not already selected
   useEffect(() => {
@@ -35,6 +37,22 @@ export const RecipeDetailScreen = () => {
     setAddToCartAnimation(true);
     setTimeout(() => setAddToCartAnimation(false), 500);
   };
+  
+  const handleCustomizeClick = () => {
+    // Show payment modal instead of going directly to customize
+    setShowPaymentModal(true);
+  };
+  
+  const handlePaymentComplete = () => {
+    // Close modal and proceed to customize screen
+    setShowPaymentModal(false);
+    goToCustomize(selectedRecipe.id);
+  };
+
+  // Calculate a mock price based on cooking time and ingredients count
+  const recipePrice = Number(
+    (selectedRecipe?.cookingTime * 0.5 + selectedRecipe?.ingredients.length * 1.25).toFixed(2)
+  );
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-black to-purple-950 text-white">
@@ -89,7 +107,12 @@ export const RecipeDetailScreen = () => {
             </div>
           </div>
           
-          <p className="text-gray-300">{selectedRecipe.description}</p>
+          <div className="flex items-center justify-between">
+            <p className="text-gray-300">{selectedRecipe.description}</p>
+            <span className="ml-2 rounded-full bg-purple-600/60 px-3 py-1 text-sm font-bold">
+              ${recipePrice}
+            </span>
+          </div>
         </motion.div>
 
         <motion.div
@@ -168,13 +191,22 @@ export const RecipeDetailScreen = () => {
             
             <button
               className="h-12 w-1/3 rounded-xl bg-purple-600 py-3 font-medium text-white"
-              onClick={() => goToCustomize(selectedRecipe.id)}
+              onClick={handleCustomizeClick}
             >
               Customize & Cook
             </button>
           </div>
         </div>
       </div>
+
+      {/* Enhanced Payment QR Modal */}
+      <PaymentQRModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onPaymentComplete={handlePaymentComplete}
+        recipeName={selectedRecipe?.name || ""}
+        amount={recipePrice}
+      />
     </div>
   );
 };

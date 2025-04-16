@@ -1,13 +1,15 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity, AlertCircle, Check, CoffeeIcon, Droplets, Flame, Soup, Utensils } from "lucide-react";
+import { Activity, AlertCircle, Check, CoffeeIcon, Droplets, Flame, RefreshCw, Soup, Utensils } from "lucide-react";
 import { useAppStore } from "../store";
 import { Sidebar } from "./ui/Sidebar";
+import { initialModules } from "../store/initialData";
 
 export const ModuleStatusPanel = () => {
-  const { modules } = useAppStore();
+  const { modules, updateModuleLevel } = useAppStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showMonitor, setShowMonitor] = useState(false);
+  const [refilling, setRefilling] = useState<string | null>(null);
 
   const getModuleIcon = (iconName: string) => {
     switch (iconName) {
@@ -32,6 +34,20 @@ export const ModuleStatusPanel = () => {
 
   const toggleMonitor = () => {
     setShowMonitor(!showMonitor);
+  };
+
+  const handleRefill = (moduleId: string) => {
+    setRefilling(moduleId);
+    const initialModule = initialModules.find(m => m.id === moduleId);
+    const currentModule = modules.find(m => m.id === moduleId);
+    
+    if (initialModule && currentModule) {
+      const refillAmount = -(initialModule.maxLevel - currentModule.currentLevel);
+      updateModuleLevel(moduleId, refillAmount);
+      setTimeout(() => {
+        setRefilling(null);
+      }, 1000);
+    }
   };
 
   const sidebarItems = [
@@ -92,20 +108,29 @@ export const ModuleStatusPanel = () => {
                         {module.name}
                       </span>
                     </div>
-                    {module.status === "warning" ? (
-                      <AlertCircle
-                        size={16}
-                        className="text-yellow-500"
-                      />
-                    ) : module.status === "critical" ? (
-                      <AlertCircle size={16} className="text-red-500" />
+                    {module.status === "warning" || module.status === "critical" ? (
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => handleRefill(module.id)}
+                        className="flex items-center gap-1 rounded-full bg-blue-500/20 px-2 py-1 text-xs text-blue-400 hover:bg-blue-500/30"
+                      >
+                        <RefreshCw 
+                          size={12} 
+                          className={refilling === module.id ? "animate-spin" : ""} 
+                        />
+                        <span>Refill</span>
+                      </motion.button>
                     ) : (
                       <Check size={16} className="text-green-500" />
                     )}
                   </div>
 
                   <div className="h-2 w-full rounded-full bg-white/10">
-                    <div
+                    <motion.div
+                      initial={{ width: `${(module.currentLevel / module.maxLevel) * 100}%` }}
+                      animate={{ width: `${(module.currentLevel / module.maxLevel) * 100}%` }}
+                      transition={{ type: "spring", damping: 10 }}
                       className={`h-full rounded-full ${
                         module.status === "warning"
                           ? "bg-yellow-500"
@@ -113,9 +138,6 @@ export const ModuleStatusPanel = () => {
                           ? "bg-red-500"
                           : "bg-green-500"
                       }`}
-                      style={{
-                        width: `${(module.currentLevel / module.maxLevel) * 100}%`,
-                      }}
                     />
                   </div>
 
