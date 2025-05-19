@@ -10,7 +10,7 @@ app.use(bodyParser.json());
 
 // Configure Serial Port for UART communication with ESP32
 const port = new SerialPort({ 
-  path: '/dev/ttyS0', 
+  path: '/dev/ttyUSB0', // Use '/dev/ttyS0' for GPIO serial port
   baudRate: 115200 
 });
 
@@ -48,7 +48,7 @@ app.post('/api/cooking/start', (req, res) => {
     
     console.log('Sending to ESP32:', uartMessage);
     
-    // Send data
+    // Send data to ESP32 via UART
     port.write(uartMessage, (err) => {
       if (err) {
         console.error('Failed to write to serial port:', err.message);

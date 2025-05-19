@@ -14,15 +14,15 @@ import {
 } from "firebase/firestore";
 import { Module, Recipe, CartItem, CookingQueue } from "../types";
 
-// Your web app's Firebase configuration
+// Firebase configuration - using Vite environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyCnNvHUEllFKgsNgo3_uFU9LRelKGdDxCw",
-  authDomain: "nexcook-ab40a.firebaseapp.com",
-  projectId: "nexcook-ab40a",
-  storageBucket: "nexcook-ab40a.firebasestorage.app",
-  messagingSenderId: "55101686719",
-  appId: "1:55101686719:web:b49bbc253499c65244570a",
-  measurementId: "G-VZVJYHM8GK"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCnNvHUEllFKgsNgo3_uFU9LRelKGdDxCw",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "nexcook-ab40a.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "nexcook-ab40a",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "nexcook-ab40a.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "55101686719",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:55101686719:web:b49bbc253499c65244570a",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-VZVJYHM8GK"
 };
 
 // Initialize Firebase
@@ -257,14 +257,14 @@ export const firebaseService = {
   },
   
   // Add a method to sync Zustand state to Firebase when offline connectivity is restored
-  syncOfflineChanges(zustandState: Partial<AppState>) {
+  syncOfflineChanges(zustandState: any) {
     // This would be implemented with IndexedDB or similar for offline storage
     // and then sync when online status is detected
     // For simplicity, we'll just update directly for now
     if (navigator.onLine) {
       if (zustandState.modules) {
         // Update modules
-        zustandState.modules.forEach(module => {
+        zustandState.modules.forEach((module: Module) => {
           this.updateModule(module.id, module);
         });
       }
@@ -278,7 +278,7 @@ export const firebaseService = {
   }
 };
 
-// Add a listener for online/offline status to manage sync operations
+// Add event listeners outside of the service object
 window.addEventListener('online', () => {
   console.log('Application is online. Syncing any offline changes...');
   // Implement sync logic here
