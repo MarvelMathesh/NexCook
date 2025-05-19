@@ -14,16 +14,21 @@ import {
 } from "firebase/firestore";
 import { Module, Recipe, CartItem, CookingQueue } from "../types";
 
-// Your web app's Firebase configuration
+// Firebase configuration from environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyCnNvHUEllFKgsNgo3_uFU9LRelKGdDxCw",
-  authDomain: "nexcook-ab40a.firebaseapp.com",
-  projectId: "nexcook-ab40a",
-  storageBucket: "nexcook-ab40a.firebasestorage.app",
-  messagingSenderId: "55101686719",
-  appId: "1:55101686719:web:b49bbc253499c65244570a",
-  measurementId: "G-VZVJYHM8GK"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
 };
+
+// Add environment variable validation
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  console.error('Firebase configuration is incomplete. Make sure to set up your .env file correctly.');
+}
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -274,11 +279,6 @@ export const firebaseService = {
       }
       
       // ...and so on for other state
-    }
-  }
-};
-
-// Add a listener for online/offline status to manage sync operations
 window.addEventListener('online', () => {
   console.log('Application is online. Syncing any offline changes...');
   // Implement sync logic here
