@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { AppState, Recipe, Module, CartItem, Customization } from '../types';
 import { initialModules, initialRecipes } from './initialData';
 import { firebaseService } from '../services/firebase';
+import { uartService } from '../services/uartService';
 import { useEffect } from 'react';
 
 // Initialize Firebase with default data when the app starts
@@ -181,6 +182,7 @@ export const useAppStore = create<AppState & {
     
     const updatedModules = [...state.modules];
     const moduleUpdates: {id: string, data: Partial<Module>}[] = [];
+    const uartModuleUpdates: {id: string, change: number}[] = []; // For UART communication
     
     if (state.selectedRecipe) {
       state.selectedRecipe.ingredients.forEach(ingredient => {
@@ -188,6 +190,7 @@ export const useAppStore = create<AppState & {
         if (moduleIndex >= 0) {
           const currentModule = updatedModules[moduleIndex];
           const newLevel = Math.max(0, currentModule.currentLevel - ingredient.quantity);
+          const changeAmount = newLevel - currentModule.currentLevel; // This will be negative
           const newStatus = newLevel <= currentModule.threshold ? (newLevel === 0 ? 'critical' : 'warning') : 'normal';
           
           updatedModules[moduleIndex] = {
@@ -204,12 +207,33 @@ export const useAppStore = create<AppState & {
               status: newStatus
             }
           });
+          
+          // Collect updates for UART communication
+          uartModuleUpdates.push({
+            id: currentModule.id,
+            change: changeAmount // Negative value representing the reduction
+          });
         }
       });
       
       // Batch update modules in Firebase for better performance
       if (moduleUpdates.length > 0) {
         firebaseService.updateModulesBatch(moduleUpdates);
+      }
+      
+      // Send updates to ESP32 via UART
+      if (uartModuleUpdates.length > 0) {
+        uartService.sendModuleUpdates(uartModuleUpdates)
+          .then(response => {
+            if (response.success) {
+              console.log("Successfully sent cooking instructions to ESP32:", response.message);
+            } else {
+              console.error("Failed to send cooking instructions to ESP32:", response.error);
+            }
+          })
+          .catch(error => {
+            console.error("Error sending cooking instructions to ESP32:", error);
+          });
       }
       
       // Update the recipe's statistics
