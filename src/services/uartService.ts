@@ -9,8 +9,9 @@ export const uartService = {
    */
   async sendModuleUpdates(moduleUpdates: { id: string; change: number }[]): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
-      const backendUrl = 'http://localhost:3001';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
       
+      console.log('Sending module updates to ESP32 via UART:', moduleUpdates);
       const response = await fetch(`${backendUrl}/api/cooking/start`, {
         method: 'POST',
         headers: {
