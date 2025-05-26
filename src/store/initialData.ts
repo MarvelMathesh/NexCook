@@ -1,10 +1,10 @@
 import { Module, Recipe } from "../types";
-import { CoffeeIcon, Droplets, Flame, Soup, Utensils } from "lucide-react";
 
 export const initialModules: Module[] = [
+  // Liquid Dispensing Systems
   {
-    id: "water",
-    name: "Water Dispenser",
+    id: "water-dispense",
+    name: "Water Dispense Module",
     currentLevel: 2000,
     maxLevel: 2000,
     threshold: 500,
@@ -13,44 +13,109 @@ export const initialModules: Module[] = [
     icon: "Droplets"
   },
   {
-    id: "spice",
-    name: "Spice Dispenser",
-    currentLevel: 100,
-    maxLevel: 100,
-    threshold: 20,
+    id: "oil-dispense",
+    name: "Oil Dispense Module",
+    currentLevel: 500,
+    maxLevel: 500,
+    threshold: 100,
+    unit: "ml",
+    status: "normal",
+    icon: "Droplets"
+  },
+  {
+    id: "boiling-water",
+    name: "Boiling Water Module",
+    currentLevel: 1500,
+    maxLevel: 1500,
+    threshold: 300,
+    unit: "ml",
+    status: "normal",
+    icon: "Flame"
+  },
+
+  // Solid Ingredient Systems
+  {
+    id: "spice-dispense",
+    name: "Spice Dispense Module",
+    currentLevel: 200,
+    maxLevel: 200,
+    threshold: 40,
     unit: "g",
     status: "normal",
     icon: "Utensils"
   },
   {
-    id: "ingredients",
-    name: "Solid Ingredient Hopper",
-    currentLevel: 500,
-    maxLevel: 500,
-    threshold: 100,
+    id: "hopper-dispense",
+    name: "Hopper Dispense Module",
+    currentLevel: 1000,
+    maxLevel: 1000,
+    threshold: 200,
     unit: "g",
     status: "normal",
     icon: "Soup"
   },
+  // Processing Modules
   {
-    id: "mixer",
-    name: "Blender/Mixer",
+    id: "grinding",
+    name: "Grinding Module",
     currentLevel: 100,
     maxLevel: 100,
-    threshold: 10,
+    threshold: 15,
     unit: "%",
     status: "normal",
     icon: "CoffeeIcon"
   },
   {
-    id: "cooktop",
-    name: "Cooktop",
+    id: "chopping",
+    name: "Chopping Module",
+    currentLevel: 100,
+    maxLevel: 100,
+    threshold: 15,
+    unit: "%",
+    status: "normal",
+    icon: "Scissors"
+  },
+  {
+    id: "stirring",
+    name: "Stirring Operation Module",
     currentLevel: 100,
     maxLevel: 100,
     threshold: 10,
     unit: "%",
     status: "normal",
-    icon: "Flame"
+    icon: "Wind"
+  },
+  // Thermal Processing
+  {
+    id: "heating",
+    name: "Heating Module",
+    currentLevel: 100,
+    maxLevel: 100,
+    threshold: 20,
+    unit: "%",
+    status: "normal",
+    icon: "Thermometer"
+  },
+  {
+    id: "steaming",
+    name: "Steaming Vegetable Module",
+    currentLevel: 100,
+    maxLevel: 100,
+    threshold: 15,
+    unit: "%",
+    status: "normal",
+    icon: "Sparkles"
+  },
+
+  // Maintenance Module
+  {
+    id: "cleaning",
+    name: "Cleaning Operation Module",
+    currentLevel: 100,
+    maxLevel: 100,    threshold: 25,
+    unit: "%",
+    status: "normal",
+    icon: "Shield"
   }
 ];
 
@@ -67,29 +132,41 @@ export const initialRecipes: Recipe[] = [
         name: "Fresh Tomatoes",
         quantity: 200,
         unit: "g",
-        moduleId: "ingredients"
+        moduleId: "hopper-dispense"
       },
       {
         id: "water-tomato",
-        name: "Water",
+        name: "Hot Water",
         quantity: 300,
         unit: "ml",
-        moduleId: "water"
+        moduleId: "boiling-water"
       },
       {
         id: "spices-tomato",
         name: "Spice Mix",
         quantity: 10,
         unit: "g",
-        moduleId: "spice"
+        moduleId: "spice-dispense"
+      },
+      {
+        id: "oil-tomato",
+        name: "Cooking Oil",
+        quantity: 15,
+        unit: "ml",
+        moduleId: "oil-dispense"
       }
     ],
     steps: [
-      "Heating water to optimal temperature",
-      "Adding tomatoes and spices",
-      "Blending ingredients to perfect consistency",
-      "Simmering the soup for enhanced flavor",
-      "Final seasoning adjustments"
+      "Activating boiling water module for optimal temperature",
+      "Dispensing fresh tomatoes from hopper module",
+      "Chopping tomatoes using precision chopping module",
+      "Heating oil in cooking chamber using heating module",
+      "Adding spices through automated spice dispense system",
+      "Stirring ingredients using intelligent stirring operation",
+      "Grinding spices for enhanced flavor release",
+      "Steaming vegetables for perfect texture",
+      "Final temperature control and consistency check",
+      "Cleaning operation initiated for next recipe"
     ],
     imageUrl: "/assets/images/tomato-soup.jpg",
     rating: 4.5,
@@ -107,29 +184,40 @@ export const initialRecipes: Recipe[] = [
         name: "Fresh Spinach",
         quantity: 150,
         unit: "g",
-        moduleId: "ingredients"
+        moduleId: "hopper-dispense"
       },
       {
         id: "water-spinach",
         name: "Water",
         quantity: 250,
         unit: "ml",
-        moduleId: "water"
+        moduleId: "water-dispense"
       },
       {
         id: "spices-spinach",
         name: "Spice Mix",
         quantity: 5,
         unit: "g",
-        moduleId: "spice"
+        moduleId: "spice-dispense"
+      },
+      {
+        id: "oil-spinach",
+        name: "Olive Oil",
+        quantity: 12,
+        unit: "ml",
+        moduleId: "oil-dispense"
       }
     ],
     steps: [
-      "Heating water to optimal temperature",
-      "Adding spinach and spices",
-      "Blending ingredients to smooth consistency",
-      "Simmering for enhanced flavor",
-      "Final seasoning adjustments"
+      "Dispensing fresh spinach from hopper module",
+      "Chopping spinach leaves using precision chopping module",
+      "Activating water dispense for cooking liquid",
+      "Heating oil using controlled heating module",
+      "Grinding spices for aromatic base",
+      "Steaming spinach for optimal nutrition retention",
+      "Stirring operation for perfect consistency",
+      "Final heating adjustment for serving temperature",
+      "System cleaning operation for hygiene maintenance"
     ],
     imageUrl: "/assets/images/spinach-soup.jpg",
     rating: 4.2,
@@ -147,29 +235,41 @@ export const initialRecipes: Recipe[] = [
         name: "Tur Dal",
         quantity: 100,
         unit: "g",
-        moduleId: "ingredients"
+        moduleId: "hopper-dispense"
       },
       {
         id: "water-turdal",
-        name: "Water",
+        name: "Boiling Water",
         quantity: 400,
         unit: "ml",
-        moduleId: "water"
+        moduleId: "boiling-water"
       },
       {
         id: "spices-turdal",
         name: "Spice Mix",
         quantity: 15,
         unit: "g",
-        moduleId: "spice"
+        moduleId: "spice-dispense"
+      },
+      {
+        id: "oil-turdal",
+        name: "Ghee/Oil",
+        quantity: 20,
+        unit: "ml",
+        moduleId: "oil-dispense"
       }
     ],
     steps: [
-      "Heating water to optimal temperature",
-      "Adding pre-soaked lentils and spices",
-      "Cooking lentils to perfect tenderness",
-      "Simmering for enhanced flavor",
-      "Final seasoning and tempering"
+      "Dispensing pre-soaked tur dal from hopper module",
+      "Activating boiling water module for cooking",
+      "Grinding spices for enhanced flavor profile",
+      "Heating oil using precision heating module",
+      "Adding spices through automated spice dispense",
+      "Steaming dal for perfect tenderness",
+      "Stirring operation for consistent cooking",
+      "Chopping garnish ingredients for presentation",
+      "Final heating and temperature stabilization",
+      "Automated cleaning cycle for module maintenance"
     ],
     imageUrl: "/assets/images/tur-dal.jpg",
     rating: 4.7,
@@ -187,29 +287,41 @@ export const initialRecipes: Recipe[] = [
         name: "Masoor Dal",
         quantity: 100,
         unit: "g",
-        moduleId: "ingredients"
+        moduleId: "hopper-dispense"
       },
       {
         id: "water-masoordal",
         name: "Water",
         quantity: 350,
         unit: "ml",
-        moduleId: "water"
+        moduleId: "water-dispense"
       },
       {
         id: "spices-masoordal",
         name: "Spice Mix",
         quantity: 12,
         unit: "g",
-        moduleId: "spice"
+        moduleId: "spice-dispense"
+      },
+      {
+        id: "oil-masoordal",
+        name: "Cooking Oil",
+        quantity: 18,
+        unit: "ml",
+        moduleId: "oil-dispense"
       }
     ],
     steps: [
-      "Heating water to optimal temperature",
-      "Adding pre-soaked lentils and spices",
-      "Cooking lentils to perfect tenderness",
-      "Simmering for enhanced flavor",
-      "Final seasoning and tempering"
+      "Dispensing masoor dal from automated hopper module",
+      "Water dispense activation for cooking medium",
+      "Grinding spices using precision grinding module",
+      "Heating oil in cooking chamber",
+      "Adding ground spices through spice dispense system",
+      "Steaming lentils for optimal texture",
+      "Stirring operation for even cooking distribution",
+      "Chopping fresh herbs for garnish preparation",
+      "Final heating phase for serving readiness",
+      "Comprehensive cleaning operation cycle"
     ],
     imageUrl: "/assets/images/masoor-dal.jpg",
     rating: 4.4,

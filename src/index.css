@@ -2,8 +2,77 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer utilities {
-  .drop-shadow-glow-purple {
-    filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.5));
+@layer base {
+  :root {
+    --background: 240 10% 4%;
+    --foreground: 0 0% 100%;
+    --primary: 270 95% 65%;
+    --primary-foreground: 0 0% 100%;
+    --accent: 330 80% 60%;
+    --accent-foreground: 0 0% 100%;
+    --muted: 240 5% 15%;
+    --muted-foreground: 240 5% 65%;
   }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .text-glow {
+    text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
+  }
+
+  .mask-radial-faded {
+    mask-image: radial-gradient(circle at center, black, transparent 80%);
+  }
+
+  .glass {
+    @apply bg-glass-gradient backdrop-blur-lg backdrop-saturate-[180%] border border-white/10 shadow-glass;
+  }
+
+  .glass-card {
+    @apply glass rounded-2xl;
+  }
+
+  .glass-panel {
+    @apply glass rounded-3xl;
+  }
+
+  .glass-button {
+    @apply glass rounded-full hover:bg-white/10 transition-all;
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-muted/30 rounded-full;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-primary/30 rounded-full hover:bg-primary/50 transition-colors;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.drop-shadow-glow-purple {
+  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.5));
 }

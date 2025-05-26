@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { AppState, Recipe, Module, CartItem, Customization } from '../types';
+import { AppState, Recipe, Module, ModuleOperation, Customization } from '../types';
 import { initialModules, initialRecipes } from './initialData';
 import { firebaseService } from '../services/firebase';
 import { uartService } from '../services/uartService';
@@ -27,6 +26,15 @@ export const useAppStore = create<AppState & {
   processNextQueueItem: () => void;
   startCookingQueue: () => void;
   fetchDataFromFirebase: () => Promise<void>;
+  performModuleOperation: (moduleId: string, operationType: string, amount: number, duration?: number) => void;
+  getModuleWarnings: () => Array<{
+    moduleId: string;
+    moduleName: string;
+    type: 'critical' | 'warning' | 'maintenance';
+    message: string;
+    priority: number;
+  }>;
+  performMaintenanceRefill: () => void;
 }>((set, get) => ({
   currentScreen: 'home',
   selectedRecipe: null,
@@ -45,9 +53,7 @@ export const useAppStore = create<AppState & {
     items: [],
     currentItem: 0,
     status: 'idle'
-  },
-
-  // Function to fetch initial data from Firebase
+  },  // Function to fetch initial data from Firebase
   fetchDataFromFirebase: async () => {
     try {
       // Get modules, recipes, and app state from Firebase
@@ -55,21 +61,51 @@ export const useAppStore = create<AppState & {
       const recipes = await firebaseService.getRecipes();
       const appState = await firebaseService.getAppState() as any;
       
-      set({ 
-        modules: modules.length > 0 ? modules : initialModules,
-        recipes: recipes.length > 0 ? recipes : initialRecipes,
-        cart: appState.cart || [],
-        customization: appState.customization || {
-          salt: 50,
-          spice: 50,
-          water: 50,
-        },
-        cookingQueue: appState.cookingQueue || {
-          items: [],
-          currentItem: 0,
-          status: 'idle'
-        }
-      });
+      console.log("Firebase modules count:", modules.length);
+      console.log("Initial modules count:", initialModules.length);
+        // If Firebase has fewer modules than expected, reinitialize with complete set
+      if (modules.length < initialModules.length) {
+        console.log("Firebase has incomplete module set, reinitializing...");
+        await firebaseService.forceReinitializeModules(initialModules);
+        // Use initial modules immediately
+        set({ 
+          modules: initialModules,
+          recipes: recipes.length > 0 ? recipes : initialRecipes,
+          cart: appState?.cart || [],
+          customization: appState?.customization || {
+            salt: 50,
+            spice: 50,
+            water: 50,
+          },
+          cookingQueue: appState?.cookingQueue || {
+            items: [],
+            currentItem: 0,
+            status: 'idle'
+          }
+        });
+      } else {
+        // Use Firebase modules if complete, ensure proper typing
+        const typedModules: Module[] = modules.map(module => ({
+          ...module,
+          status: module.status as 'normal' | 'warning' | 'critical'
+        }));
+        
+        set({ 
+          modules: modules.length > 0 ? typedModules : initialModules,
+          recipes: recipes.length > 0 ? recipes : initialRecipes,
+          cart: appState?.cart || [],
+          customization: appState?.customization || {
+            salt: 50,
+            spice: 50,
+            water: 50,
+          },
+          cookingQueue: appState?.cookingQueue || {
+            items: [],
+            currentItem: 0,
+            status: 'idle'
+          }
+        });
+      }
       
       // Set up real-time listeners
       firebaseService.subscribeToModules((updatedModules) => {
@@ -412,7 +448,186 @@ export const useAppStore = create<AppState & {
     setTimeout(() => {
       get().processNextQueueItem();
     }, 500);
-  }
+  },
+  // Enhanced module operation functions for specific module types
+  performModuleOperation: (moduleId: string, operationType: string, amount: number, duration?: number) => {
+    set((state) => {
+      const modules = state.modules.map((module) => {
+        if (module.id === moduleId) {
+          let newLevel = module.currentLevel;
+          let operationData: any = { type: operationType, amount, timestamp: Date.now() };
+          
+          // Handle different operation types
+          switch (operationType) {
+            case 'dispense':
+              newLevel = Math.max(0, module.currentLevel - amount);
+              operationData.operation = `Dispensed ${amount} ${module.unit}`;
+              break;
+            case 'grinding':
+              newLevel = Math.max(0, module.currentLevel - amount);
+              operationData.operation = `Ground ${amount} ${module.unit}`;
+              operationData.duration = duration || 30; // Default 30 seconds
+              break;
+            case 'chopping':
+              newLevel = Math.max(0, module.currentLevel - amount);
+              operationData.operation = `Chopped ${amount} ${module.unit}`;
+              operationData.duration = duration || 45; // Default 45 seconds
+              break;
+            case 'heating':
+              operationData.operation = `Heating for ${duration || 60} seconds`;
+              operationData.duration = duration || 60;
+              operationData.temperature = amount; // Amount represents temperature
+              break;
+            case 'steaming':
+              newLevel = Math.max(0, module.currentLevel - amount);
+              operationData.operation = `Steaming with ${amount} ${module.unit}`;
+              operationData.duration = duration || 120;
+              break;
+            case 'stirring':
+              operationData.operation = `Stirring for ${duration || 30} seconds`;
+              operationData.duration = duration || 30;
+              operationData.speed = amount; // Amount represents stirring speed
+              break;
+            case 'cleaning':
+              operationData.operation = `Cleaning cycle - ${duration || 180} seconds`;
+              operationData.duration = duration || 180;
+              break;
+            default:
+              newLevel = Math.max(0, module.currentLevel - amount);
+              operationData.operation = `Operation: ${operationType}`;
+          }
+          
+          const newStatus: 'normal' | 'warning' | 'critical' = newLevel <= module.threshold ? (newLevel === 0 ? 'critical' : 'warning') : 'normal';
+          
+          const updatedModule = {
+            ...module,
+            currentLevel: newLevel,
+            status: newStatus,
+            lastOperation: operationData,
+          };
+          
+          // Update module in Firebase
+          firebaseService.updateModule(moduleId, updatedModule);
+          
+          // Send operation to ESP32 via UART
+          uartService.sendModuleOperation({
+            moduleId,
+            operationType,
+            amount,
+            duration: operationData.duration,
+            temperature: operationData.temperature,
+            speed: operationData.speed
+          }).catch((error: any) => {
+            console.error("Error sending module operation to ESP32:", error);
+          });
+          
+          return updatedModule;
+        }
+        return module;
+      });
+      
+      return { modules };
+    });
+  },
+
+  // Enhanced warning system with detailed notifications
+  getModuleWarnings: () => {
+    const state = get();
+    const warnings: Array<{
+      moduleId: string;
+      moduleName: string;
+      type: 'critical' | 'warning' | 'maintenance';
+      message: string;
+      priority: number;
+    }> = [];
+
+    state.modules.forEach(module => {
+      // Critical level warnings
+      if (module.status === 'critical') {
+        warnings.push({
+          moduleId: module.id,
+          moduleName: module.name,
+          type: 'critical',
+          message: `${module.name} is empty and needs immediate refill`,
+          priority: 1
+        });
+      }
+      
+      // Low level warnings
+      else if (module.status === 'warning') {
+        warnings.push({
+          moduleId: module.id,
+          moduleName: module.name,
+          type: 'warning',
+          message: `${module.name} is running low (${module.currentLevel}/${module.maxLevel} ${module.unit})`,
+          priority: 2
+        });
+      }
+      
+      // Maintenance warnings for specific module types
+      if (['grinding', 'chopping', 'heating'].includes(module.id)) {
+        const lastMaintenance = module.lastOperation?.timestamp || 0;
+        const hoursSinceLastOperation = (Date.now() - lastMaintenance) / (1000 * 60 * 60);
+        
+        if (hoursSinceLastOperation > 24) { // 24 hours without maintenance
+          warnings.push({
+            moduleId: module.id,
+            moduleName: module.name,
+            type: 'maintenance',
+            message: `${module.name} may need maintenance check`,
+            priority: 3
+          });
+        }
+      }
+    });
+
+    return warnings.sort((a, b) => a.priority - b.priority);
+  },
+
+  // Batch refill function for maintenance
+  performMaintenanceRefill: () => {
+    const state = get();
+    const moduleUpdates: {id: string, data: Partial<Module>}[] = [];
+    
+    const updatedModules = state.modules.map(module => {
+      if (module.status === 'critical' || module.status === 'warning') {
+        const lastOperation = {
+          type: 'refill',
+          timestamp: Date.now(),
+          operation: `Maintenance refill to ${module.maxLevel} ${module.unit}`,
+          amount: module.maxLevel - module.currentLevel
+        };
+        
+        const updatedModule = {
+          ...module,
+          currentLevel: module.maxLevel,
+          status: 'normal' as const,
+          lastOperation
+        };
+        
+        moduleUpdates.push({
+          id: module.id,
+          data: {
+            currentLevel: module.maxLevel,
+            status: 'normal',
+            lastOperation
+          }
+        });
+        
+        return updatedModule;
+      }
+      return module;
+    });
+    
+    // Batch update modules in Firebase
+    if (moduleUpdates.length > 0) {
+      firebaseService.updateModulesBatch(moduleUpdates);
+    }
+    
+    set({ modules: updatedModules });
+  },
+
+  // ...existing code...
 }));
 
 // Create a hook to initialize Firebase data when the app loads

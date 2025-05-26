@@ -11,6 +11,13 @@ import {
   writeBatch,
   DocumentData,
   connectFirestoreEmulator, // Add for local development if needed
+  query,
+  where,
+  getDocs,
+  orderBy,
+  limit,
+  serverTimestamp,
+  addDoc,
 } from "firebase/firestore";
 import { Module, Recipe, CartItem, CookingQueue } from "../types";
 
@@ -30,16 +37,12 @@ const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const db = getFirestore(app);
 
-// Uncomment for local development with emulator
-// if (window.location.hostname === "localhost") {
-//   connectFirestoreEmulator(db, 'localhost', 8080);
-// }
-
 // Collection references
 const modulesCollection = collection(db, "modules");
 const recipesCollection = collection(db, "recipes");
 const userCollection = collection(db, "users");
 const stateDoc = doc(userCollection, "appState");
+const cookingHistoryCollection = collection(db, "cookingHistory");
 
 // Add a debounce utility to prevent too many writes
 const debounce = (func: Function, timeout = 300) => {
@@ -50,7 +53,7 @@ const debounce = (func: Function, timeout = 300) => {
   };
 };
 
-// Firebase Data Service
+// Firebase Data Service with improved real-time sync
 export const firebaseService = {
   // Initialize the database with default data if it doesn't exist
   async initializeDatabase(initialModules: Module[], initialRecipes: Recipe[]) {
@@ -67,13 +70,19 @@ export const firebaseService = {
         // Create initial modules collection
         initialModules.forEach(module => {
           const moduleRef = doc(modulesCollection, module.id);
-          batch.set(moduleRef, module);
+          batch.set(moduleRef, {
+            ...module,
+            lastUpdated: serverTimestamp(),
+          });
         });
         
         // Create initial recipes collection
         initialRecipes.forEach(recipe => {
           const recipeRef = doc(recipesCollection, recipe.id);
-          batch.set(recipeRef, recipe);
+          batch.set(recipeRef, {
+            ...recipe,
+            lastUpdated: serverTimestamp(),
+          });
         });
         
         // Create initial app state
@@ -88,7 +97,8 @@ export const firebaseService = {
             items: [],
             currentItem: 0,
             status: 'idle'
-          }
+          },
+          lastUpdated: serverTimestamp(),
         });
         
         // Commit all operations as a single transaction
@@ -103,19 +113,22 @@ export const firebaseService = {
     }
   },
   
-  // Modules
+  // Enhanced Modules Methods
   async getModules(): Promise<Module[]> {
     try {
-      // Create listener to modules collection
-      return new Promise((resolve) => {
-        onSnapshot(modulesCollection, (snapshot) => {
-          const modules: Module[] = [];
-          snapshot.forEach((doc) => {
-            modules.push(doc.data() as Module);
-          });
-          resolve(modules);
-        });
+      // Get all documents from modules collection
+      const snapshot = await getDocs(modulesCollection);
+      const modules: Module[] = [];
+      
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        // Remove Firestore timestamp from the returned data
+        const { lastUpdated, ...moduleData } = data;
+        modules.push(moduleData as Module);
       });
+      
+      console.log(`Firebase: Retrieved ${modules.length} modules`);
+      return modules;
     } catch (error) {
       console.error("Error getting modules:", error);
       return [];
@@ -126,12 +139,15 @@ export const firebaseService = {
   updateModule: debounce(async (moduleId: string, moduleData: Partial<Module>) => {
     try {
       const moduleRef = doc(modulesCollection, moduleId);
-      await updateDoc(moduleRef, moduleData);
+      await updateDoc(moduleRef, {
+        ...moduleData,
+        lastUpdated: serverTimestamp(),
+      });
       console.log(`Module ${moduleId} updated successfully`);
     } catch (error) {
       console.error("Error updating module:", error);
     }
-  }, 500),
+  }, 300), // Reduced debounce time for more responsive updates
   
   // Add batch update for multiple modules
   async updateModulesBatch(updates: {id: string, data: Partial<Module>}[]) {
@@ -142,7 +158,10 @@ export const firebaseService = {
       
       updates.forEach(update => {
         const moduleRef = doc(modulesCollection, update.id);
-        batch.update(moduleRef, update.data);
+        batch.update(moduleRef, {
+          ...update.data,
+          lastUpdated: serverTimestamp(),
+        });
       });
       
       await batch.commit();
@@ -154,14 +173,45 @@ export const firebaseService = {
     }
   },
   
-  // Recipes
+  // Force reinitialize modules - useful when module definitions change
+  async forceReinitializeModules(initialModules: Module[]) {
+    try {
+      console.log("Force reinitializing Firebase modules with complete set...");
+      
+      // Use a batch for better performance and atomicity
+      const batch = writeBatch(db);
+      
+      // Update all modules in Firebase
+      initialModules.forEach(module => {
+        const moduleRef = doc(modulesCollection, module.id);
+        batch.set(moduleRef, {
+          ...module,
+          lastUpdated: serverTimestamp(),
+        });
+      });
+      
+      // Commit all operations as a single transaction
+      await batch.commit();
+      console.log(`Successfully reinitialized ${initialModules.length} modules in Firebase`);
+    } catch (error) {
+      console.error("Error reinitializing modules:", error);
+    }
+  },
+  
+  // Enhanced Recipes Methods with search capabilities
   async getRecipes(): Promise<Recipe[]> {
     try {
+      // Create a query that orders recipes by name
+      const recipesQuery = query(recipesCollection, orderBy("name"));
+      
       return new Promise((resolve) => {
-        onSnapshot(recipesCollection, (snapshot) => {
+        onSnapshot(recipesQuery, (snapshot) => {
           const recipes: Recipe[] = [];
           snapshot.forEach((doc) => {
-            recipes.push(doc.data() as Recipe);
+            const data = doc.data();
+            // Remove Firestore timestamp from the returned data
+            const { lastUpdated, ...recipeData } = data;
+            recipes.push(recipeData as Recipe);
           });
           resolve(recipes);
         });
@@ -172,23 +222,96 @@ export const firebaseService = {
     }
   },
   
+  // Get a single recipe with real-time updates
+  getRecipeWithRealTimeUpdates(
+    recipeId: string,
+    onSuccess: (recipe: Recipe) => void,
+    onError: (error: string) => void
+  ) {
+    try {
+      // Get document reference for the specific recipe
+      const recipeRef = doc(recipesCollection, recipeId);
+      
+      // Set up real-time listener
+      const unsubscribe = onSnapshot(recipeRef, 
+        (docSnap) => {
+          if (docSnap.exists()) {
+            const recipeData = docSnap.data() as Recipe;
+            onSuccess({ ...recipeData, id: docSnap.id });
+          } else {
+            onError("Recipe not found");
+          }
+        },
+        (error) => {
+          console.error("Error fetching recipe:", error);
+          onError("Failed to load recipe data");
+        }
+      );
+      
+      // Return unsubscribe function for cleanup
+      return unsubscribe;
+    } catch (error) {
+      console.error("Error setting up recipe listener:", error);
+      onError("Failed to set up recipe listener");
+      // Return empty function as fallback
+      return () => {};
+    }
+  },
+  
+  // Search recipes by name, category, or ingredients
+  async searchRecipes(searchTerm: string): Promise<Recipe[]> {
+    try {
+      // Get all recipes first (in a real app, this would use Firebase's full-text search capabilities)
+      const recipesSnapshot = await getDocs(recipesCollection);
+      const recipes: Recipe[] = [];
+      
+      recipesSnapshot.forEach((doc) => {
+        const data = doc.data();
+        // Remove Firestore timestamp from the returned data
+        const { lastUpdated, ...recipeData } = data;
+        recipes.push(recipeData as Recipe);
+      });
+      
+      // Filter recipes based on search term
+      if (!searchTerm) return recipes;
+      
+      const lowerSearchTerm = searchTerm.toLowerCase();
+      return recipes.filter(recipe => 
+        recipe.name.toLowerCase().includes(lowerSearchTerm) ||
+        recipe.category.toLowerCase().includes(lowerSearchTerm) ||
+        recipe.ingredients.some(ingredient => 
+          ingredient.name.toLowerCase().includes(lowerSearchTerm)
+        )
+      );
+    } catch (error) {
+      console.error("Error searching recipes:", error);
+      return [];
+    }
+  },
+  
   async updateRecipe(recipeId: string, recipeData: Partial<Recipe>) {
     try {
       const recipeRef = doc(recipesCollection, recipeId);
-      await updateDoc(recipeRef, recipeData);
+      await updateDoc(recipeRef, {
+        ...recipeData,
+        lastUpdated: serverTimestamp(),
+      });
       console.log(`Recipe ${recipeId} updated successfully`);
     } catch (error) {
       console.error("Error updating recipe:", error);
     }
   },
   
-  // App State
+  // Enhanced App State
   async getAppState() {
     try {
       return new Promise((resolve) => {
         onSnapshot(stateDoc, (snapshot) => {
           if (snapshot.exists()) {
-            resolve(snapshot.data());
+            const data = snapshot.data();
+            // Remove Firestore timestamp from the returned data
+            const { lastUpdated, ...stateData } = data;
+            resolve(stateData);
           } else {
             resolve({});
           }
@@ -202,7 +325,10 @@ export const firebaseService = {
   
   async updateCart(cart: CartItem[]) {
     try {
-      await updateDoc(stateDoc, { cart });
+      await updateDoc(stateDoc, { 
+        cart,
+        lastUpdated: serverTimestamp(),
+      });
       console.log("Cart updated successfully");
     } catch (error) {
       console.error("Error updating cart:", error);
@@ -211,7 +337,10 @@ export const firebaseService = {
   
   async updateCookingQueue(cookingQueue: CookingQueue) {
     try {
-      await updateDoc(stateDoc, { cookingQueue });
+      await updateDoc(stateDoc, { 
+        cookingQueue,
+        lastUpdated: serverTimestamp(),
+      });
       console.log("Cooking queue updated successfully");
     } catch (error) {
       console.error("Error updating cooking queue:", error);
@@ -220,29 +349,83 @@ export const firebaseService = {
   
   async updateCustomization(customization: { salt: number; spice: number; water: number }) {
     try {
-      await updateDoc(stateDoc, { customization });
+      await updateDoc(stateDoc, { 
+        customization,
+        lastUpdated: serverTimestamp(),
+      });
       console.log("Customization updated successfully");
     } catch (error) {
       console.error("Error updating customization:", error);
     }
   },
   
-  // Subscribe to real-time updates
+  // Cooking History Methods
+  async addCookingHistory(recipeId: string, customization: any, rating: number) {
+    try {
+      await addDoc(cookingHistoryCollection, {
+        recipeId,
+        customization,
+        rating,
+        timestamp: serverTimestamp(),
+      });
+      console.log("Cooking history added successfully");
+    } catch (error) {
+      console.error("Error adding cooking history:", error);
+    }
+  },
+  
+  async getCookingHistory(limit = 10) {
+    try {
+      const historyQuery = query(
+        cookingHistoryCollection, 
+        orderBy("timestamp", "desc"), 
+        limit(limit)
+      );
+      
+      const snapshot = await getDocs(historyQuery);
+      const history: any[] = [];
+      
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        history.push({
+          id: doc.id,
+          ...data,
+        });
+      });
+      
+      return history;
+    } catch (error) {
+      console.error("Error getting cooking history:", error);
+      return [];
+    }
+  },
+  
+  // Real-time Subscription Methods
   subscribeToModules(callback: (modules: Module[]) => void) {
-    return onSnapshot(modulesCollection, (snapshot) => {
+    const modulesQuery = query(modulesCollection, orderBy("name"));
+    
+    return onSnapshot(modulesQuery, (snapshot) => {
       const modules: Module[] = [];
       snapshot.forEach((doc) => {
-        modules.push(doc.data() as Module);
+        const data = doc.data();
+        // Remove Firestore timestamp from the returned data
+        const { lastUpdated, ...moduleData } = data;
+        modules.push(moduleData as Module);
       });
       callback(modules);
     });
   },
   
   subscribeToRecipes(callback: (recipes: Recipe[]) => void) {
-    return onSnapshot(recipesCollection, (snapshot) => {
+    const recipesQuery = query(recipesCollection, orderBy("name"));
+    
+    return onSnapshot(recipesQuery, (snapshot) => {
       const recipes: Recipe[] = [];
       snapshot.forEach((doc) => {
-        recipes.push(doc.data() as Recipe);
+        const data = doc.data();
+        // Remove Firestore timestamp from the returned data
+        const { lastUpdated, ...recipeData } = data;
+        recipes.push(recipeData as Recipe);
       });
       callback(recipes);
     });
@@ -251,12 +434,15 @@ export const firebaseService = {
   subscribeToAppState(callback: (state: DocumentData) => void) {
     return onSnapshot(stateDoc, (snapshot) => {
       if (snapshot.exists()) {
-        callback(snapshot.data());
+        const data = snapshot.data();
+        // Remove Firestore timestamp from the returned data
+        const { lastUpdated, ...stateData } = data;
+        callback(stateData);
       }
     });
   },
   
-  // Add a method to sync Zustand state to Firebase when offline connectivity is restored
+  // Offline Data Handling
   syncOfflineChanges(zustandState: any) {
     // This would be implemented with IndexedDB or similar for offline storage
     // and then sync when online status is detected
@@ -274,6 +460,18 @@ export const firebaseService = {
       }
       
       // ...and so on for other state
+    }
+  },
+  
+  // System status check
+  async checkSystemStatus() {
+    try {
+      // Ping Firestore to check connectivity
+      const testDoc = doc(db, "system", "status");
+      await getDoc(testDoc);
+      return { online: true, message: "Connected to Firebase" };
+    } catch (error) {
+      return { online: false, message: "Unable to connect to Firebase" };
     }
   }
 };

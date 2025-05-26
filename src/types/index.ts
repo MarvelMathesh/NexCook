@@ -1,3 +1,13 @@
+export interface ModuleOperation {
+  type: string;
+  amount: number;
+  timestamp: number;
+  operation: string;
+  duration?: number;
+  temperature?: number;
+  speed?: number;
+}
+
 export interface Module {
   id: string;
   name: string;
@@ -7,6 +17,7 @@ export interface Module {
   unit: string;
   status: 'normal' | 'warning' | 'critical';
   icon: string;
+  lastOperation?: ModuleOperation;
 }
 
 export interface Recipe {

@@ -28,6 +28,7 @@ export const TextGenerateEffect = ({
 }) => {
   const [wordArray, setWordArray] = useState<string[]>([]);
   const [completedWords, setCompletedWords] = useState<boolean[]>([]);
+  const [isComplete, setIsComplete] = useState(false);
 
   useEffect(() => {
     // Split by word
@@ -46,6 +47,7 @@ export const TextGenerateEffect = ({
         });
         currentWordIndex++;
       } else {
+        setIsComplete(true);
         clearInterval(interval);
       }
     }, 80);
@@ -59,8 +61,9 @@ export const TextGenerateEffect = ({
         <WordWrapper key={`${word}-${idx}`} className={textClassName}>
           <motion.span
             initial={{ opacity: 0 }}
-            animate={completedWords[idx] ? { opacity: 1 } : { opacity: 0 }}
+            animate={completedWords[idx] || isComplete ? { opacity: 1 } : { opacity: 0 }}
             transition={{ duration: 0.3 }}
+            style={{ opacity: completedWords[idx] || isComplete ? 1 : 0 }}
           >
             {word}
           </motion.span>

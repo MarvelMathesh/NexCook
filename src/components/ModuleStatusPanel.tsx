@@ -1,6 +1,22 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity, AlertCircle, Check, CoffeeIcon, Droplets, Flame, RefreshCw, Soup, Utensils, AlertTriangle } from "lucide-react";
+import { 
+  Activity, 
+  AlertCircle, 
+  Check, 
+  CoffeeIcon, 
+  Droplets, 
+  Flame, 
+  RefreshCw, 
+  Soup, 
+  Utensils, 
+  AlertTriangle,
+  Scissors,
+  Thermometer,
+  Wind,
+  Sparkles,
+  Shield
+} from "lucide-react";
 import { useAppStore } from "../store";
 import { Sidebar } from "./ui/Sidebar";
 import { initialModules } from "../store/initialData";
@@ -21,28 +37,32 @@ export const ModuleStatusPanel = () => {
       setShowMonitor(true);
     }
   }, [hasCriticalModule]);
-
   const getModuleIcon = (iconName: string) => {
     switch (iconName) {
       case "Droplets":
-        return <Droplets size={18} />;
+        return <Droplets size={18} className="text-blue-400" />;
       case "Utensils":
-        return <Utensils size={18} />;
+        return <Utensils size={18} className="text-amber-400" />;
       case "Soup":
-        return <Soup size={18} />;
+        return <Soup size={18} className="text-green-400" />;
       case "CoffeeIcon":
-        return <CoffeeIcon size={18} />;
+        return <CoffeeIcon size={18} className="text-brown-400" />;
       case "Flame":
-        return <Flame size={18} />;
+        return <Flame size={18} className="text-red-400" />;
+      case "Scissors":
+        return <Scissors size={18} className="text-purple-400" />;
+      case "Thermometer":
+        return <Thermometer size={18} className="text-orange-400" />;
+      case "Wind":
+        return <Wind size={18} className="text-cyan-400" />;
+      case "Sparkles":
+        return <Sparkles size={18} className="text-yellow-400" />;
+      case "Shield":
+        return <Shield size={18} className="text-emerald-400" />;
       default:
-        return <Activity size={18} />;
+        return <Activity size={18} className="text-purple-400" />;
     }
   };
-
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-
   const toggleMonitor = () => {
     setShowMonitor(!showMonitor);
   };

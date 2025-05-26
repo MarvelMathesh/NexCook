@@ -1,98 +1,177 @@
-import React from "react";
-import { motion } from "framer-motion";
-import { ChefHat, ChevronDown, ArrowRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles as SparklesIcon, ArrowRight, AlertTriangle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAppStore } from "../../store";
+import { GlassCard } from "../ui/GlassCard";
+import { Button } from "../ui/Button";
 import { BackgroundBeams } from "../ui/BackgroundBeams";
-import { Sparkles } from "../ui/SparklesEffect";
-import { FlipWords } from "../ui/FlipWords";
-import { TextGenerateEffect } from "../ui/TextGenerateEffect";
-import { useNavigation } from "../../hooks/useNavigation";
-import { containerVariants, itemVariants } from "../../utils/animations";
+import { FeaturedCarousel } from "../ui/FeaturedCarousel";
+import { Sparkles as SparklesEffect } from "../ui/SparklesEffect";
 
 export const HomeScreen = () => {
-  const { goToRecipes } = useNavigation();
+  const navigate = useNavigate();
+  const { recipes, modules } = useAppStore();
+  const [featuredRecipes, setFeaturedRecipes] = useState<any[]>([]);
+  const [hasModuleWarnings, setHasModuleWarnings] = useState(false);
+
+  // Get featured recipes for carousel (top 5 most popular)
+  useEffect(() => {
+    if (recipes.length > 0) {
+      const featured = [...recipes]
+        .filter(recipe => recipe.timesCooked && recipe.timesCooked > 0)
+        .sort((a, b) => (b.timesCooked || 0) - (a.timesCooked || 0))
+        .slice(0, 5);
+      
+      setFeaturedRecipes(featured);
+    }
+  }, [recipes]);
+
+  // Check if any modules need attention (real-time from Firebase)
+  useEffect(() => {
+    const moduleWarnings = modules.some(
+      (module: any) => module.status === "critical" || module.status === "warning"
+    );
+    
+    setHasModuleWarnings(moduleWarnings);
+  }, [modules]);
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden">
-      <BackgroundBeams className="absolute inset-0 z-0" />
+    <div className="relative min-h-screen overflow-hidden">      {/* Futuristic animated background with sparkles */}
+      <div className="fixed inset-0 z-0">
+        <BackgroundBeams />
+        <div className="absolute inset-0 bg-gradient-to-br from-black via-purple-950/50 to-black" />
+        
+        {/* Add sparkles to the background */}
+        <SparklesEffect id="home-sparkles" className="absolute inset-0" />
+      </div>
       
-      <div className="relative z-10 flex min-h-screen w-full flex-col items-center justify-center px-4 text-center text-white">
+      {/* Main content */}
+      <div className="container relative z-10 mx-auto px-4 py-4">
+        
+        {/* Compact Hero section */}
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="mb-6"
-        >
-          <ChefHat size={60} className="mx-auto mb-4 text-purple-400" />
-          <h1 className="text-5xl font-bold tracking-tight text-white md:text-6xl">
-            Nex<span className="text-purple-400">Cook</span>
-          </h1>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4, duration: 0.8 }}
-          className="mb-12 max-w-3xl"
-        >
-          <p className="mb-4 text-xl font-medium text-gray-200">
-            The future of cooking is{" "}
-            <FlipWords
-              words={["automated", "intelligent", "personalized", "futuristic"]}
-              className="font-bold text-purple-400"
-            />
-          </p>
-          
-          <TextGenerateEffect
-            words="Discover a new dimension of culinary experience with our state-of-the-art smart cooking technology."
-            className="text-lg text-gray-300"
-          />
-        </motion.div>
-
-        <Sparkles id="hero-sparkles" className="pointer-events-none absolute inset-0 z-0" />
-
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="grid max-w-5xl grid-cols-1 gap-8 px-4 md:grid-cols-2"
-        >
-          <motion.div 
-            variants={itemVariants}
-            className="group rounded-xl border border-white/10 bg-black/50 p-6 backdrop-blur-md transition-all hover:bg-black/70"
-          >
-            <h3 className="mb-3 text-xl font-semibold text-white">Intelligent Recipes</h3>
-            <p className="mb-4 text-gray-300">Access hundreds of smart recipes optimized for perfect results every time.</p>
-            <div className="flex items-center text-purple-400 transition-transform group-hover:translate-x-1">
-              <span>Explore recipes</span>
-              <ArrowRight size={16} className="ml-1" />
-            </div>
-          </motion.div>
-          
-          <motion.div 
-            variants={itemVariants}
-            className="group rounded-xl border border-white/10 bg-black/50 p-6 backdrop-blur-md transition-all hover:bg-black/70"
-          >
-            <h3 className="mb-3 text-xl font-semibold text-white">Personalized Cooking</h3>
-            <p className="mb-4 text-gray-300">Customize every aspect of your meal from spice levels to cooking techniques.</p>
-            <div className="flex items-center text-purple-400 transition-transform group-hover:translate-x-1">
-              <span>Start personalizing</span>
-              <ArrowRight size={16} className="ml-1" />
-            </div>
-          </motion.div>
-        </motion.div>
-
-        <motion.button
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8, duration: 0.5 }}
-          className="mt-12 flex flex-col items-center"
-          onClick={goToRecipes}
+          className="mb-8"
         >
-          <span className="mb-2 rounded-full bg-purple-500 px-6 py-3 font-medium text-white transition-all hover:bg-purple-600">
-            Start Cooking
-          </span>
-          <ChevronDown size={24} className="mt-4 animate-bounce text-white/70" />
-        </motion.button>
+          <div className="mx-auto max-w-4xl text-center">
+            <motion.div 
+              className="mb-4 inline-flex rounded-full bg-white/5 border border-white/10 backdrop-blur-xl px-4 py-2 text-sm"
+              whileHover={{ scale: 1.05, backgroundColor: "rgba(255,255,255,0.1)" }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >              <span className="inline-flex items-center gap-2 text-white/90">
+                <SparklesIcon size={16} className="text-purple-400" />
+                <span>Welcome to the future of cooking</span>
+              </span>
+            </motion.div>
+            
+            <motion.h1 
+              className="mb-4 text-4xl font-bold md:text-5xl lg:text-6xl"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <span className="text-white">Nex</span>
+              <motion.span
+                animate={{ 
+                  color: ['#a855f7', '#ec4899', '#06b6d4', '#a855f7'],
+                  textShadow: [
+                    '0 0 20px rgba(168, 85, 247, 0.8)',
+                    '0 0 20px rgba(236, 72, 153, 0.8)',
+                    '0 0 20px rgba(6, 182, 212, 0.8)',
+                    '0 0 20px rgba(168, 85, 247, 0.8)'
+                  ]
+                }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                className="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent"
+              >
+                Cook
+              </motion.span>
+            </motion.h1>
+            
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.6 }}
+              className="mx-auto mb-6 max-w-2xl text-lg text-white/70"
+            >
+              Your intelligent cooking companion. Perfectly prepared meals, personalized to your taste.
+            </motion.p>
+            
+            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Button
+                variant="primary"
+                size="lg"
+                rounded="xl"
+                glow={true}
+                onClick={() => navigate('/recipes')}
+                trailingIcon={<ArrowRight size={18} />}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold px-6 py-3 rounded-2xl border border-white/20 backdrop-blur-xl shadow-lg hover:shadow-purple-500/25 transition-all duration-300"
+              >
+                Explore Recipes
+              </Button>
+              
+              {hasModuleWarnings && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  rounded="xl"
+                  onClick={() => navigate('/module-status')}
+                  className="border-amber-500/40 text-amber-400 hover:bg-amber-500/10 backdrop-blur-xl"
+                >
+                  Check Module Status
+                </Button>
+              )}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Featured Recipes Carousel - More compact */}
+        {featuredRecipes.length > 0 && (
+          <FeaturedCarousel
+            items={featuredRecipes}
+            onItemClick={(id) => navigate(`/recipe/${id}`)}
+            className="mb-6"
+          />
+        )}
+        
+        {/* Module status card - More compact */}
+        <AnimatePresence>
+          {hasModuleWarnings && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mb-6"
+            >
+              <GlassCard 
+                variant="highlight" 
+                className="mx-auto max-w-4xl border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-orange-500/10 backdrop-blur-xl"
+              >
+                <div className="flex items-center gap-4 p-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/20">
+                    <AlertTriangle size={20} className="text-amber-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="mb-1 text-md font-semibold text-amber-100">System Alert</h3>
+                    <p className="text-sm text-amber-200/80">
+                      One or more cooking modules need attention. Check module status to ensure uninterrupted cooking.
+                    </p>
+                  </div>
+                  <Button
+                    variant="glass"
+                    size="sm"
+                    onClick={() => navigate('/module-status')}
+                    className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-100 border-amber-400/30"
+                  >
+                    View Details
+                  </Button>
+                </div>
+              </GlassCard>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
