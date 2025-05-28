@@ -75,14 +75,17 @@ export const firebaseService = {
           const recipeRef = doc(recipesCollection, recipe.id);
           batch.set(recipeRef, recipe);
         });
-        
-        // Create initial app state
+          // Create initial app state
         batch.set(stateDoc, {
           cart: [],
           customization: {
             salt: 50,
             spice: 50,
             water: 50,
+            oil: 50,
+            temperature: 50,
+            grinding: 50,
+            chopping: 50,
           },
           cookingQueue: {
             items: [],
@@ -275,7 +278,56 @@ export const firebaseService = {
       
       // ...and so on for other state
     }
-  }
+  },
+
+  // Force update database with new module system (for development/migration)
+  async forceUpdateDatabase(initialModules: Module[], initialRecipes: Recipe[]) {
+    try {
+      console.log("Force updating Firebase database with new 10-module system...");
+      
+      // Use a batch for better performance and atomicity
+      const batch = writeBatch(db);
+      
+      // Update all modules
+      initialModules.forEach(module => {
+        const moduleRef = doc(modulesCollection, module.id);
+        batch.set(moduleRef, module, { merge: false }); // Use merge: false to completely replace
+      });
+      
+      // Update all recipes
+      initialRecipes.forEach(recipe => {
+        const recipeRef = doc(recipesCollection, recipe.id);
+        batch.set(recipeRef, recipe, { merge: false }); // Use merge: false to completely replace
+      });
+      
+      // Update app state with new customization structure
+      batch.set(stateDoc, {
+        cart: [],
+        customization: {
+          salt: 50,
+          spice: 50,
+          water: 50,
+          oil: 50,
+          temperature: 50,
+          grinding: 50,
+          chopping: 50,
+        },
+        cookingQueue: {
+          items: [],
+          currentItem: 0,
+          status: 'idle'
+        }
+      }, { merge: false });
+      
+      // Commit all operations as a single transaction
+      await batch.commit();
+      console.log("Firebase database force updated successfully with 10-module system!");
+      return true;
+    } catch (error) {
+      console.error("Error force updating database:", error);
+      return false;
+    }
+  },
 };
 
 // Add event listeners outside of the service object

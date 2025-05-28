@@ -12,15 +12,13 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({ children }) 
   const fetchDataFromFirebase = useAppStore(state => state.fetchDataFromFirebase);
 
   useEffect(() => {
-    const initFirebase = async () => {
-      try {
+    const initFirebase = async () => {      try {
         console.log("Initializing Firebase connection...");
         
-        // First initialize Firebase with default data if needed
-        await firebaseService.initializeDatabase(
-          useAppStore.getState().modules, 
-          useAppStore.getState().recipes
-        );
+        // FORCE UPDATE: Update Firebase with new 10-module system
+        const { modules, recipes } = useAppStore.getState();
+        console.log("Force updating Firebase with new 10-module system...");
+        await firebaseService.forceUpdateDatabase(modules, recipes);
         
         // Then load data into Zustand
         await fetchDataFromFirebase();

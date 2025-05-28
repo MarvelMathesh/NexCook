@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Droplets, Flame, Salad as Salt, Utensils, ShoppingBag, Info, RotateCcw, CheckCircle2 } from "lucide-react";
 import { useParams } from "react-router-dom";
@@ -58,24 +58,28 @@ export const CustomizeScreen = () => {
     startCooking();
     goToCooking();
   };
-
   const handleReset = () => {
     setResetAnimation(true);
     setTimeout(() => {
       updateCustomization('salt', 50);
       updateCustomization('spice', 50);
       updateCustomization('water', 50);
+      updateCustomization('oil', 50);
+      updateCustomization('temperature', 50);
+      updateCustomization('grinding', 50);
+      updateCustomization('chopping', 50);
       setResetAnimation(false);
     }, 300);
   };
-
   // Calculate a "mood" based on customization settings
   const getMood = () => {
     const saltLevel = customization.salt > 70 ? "salty" : customization.salt < 30 ? "bland" : "balanced";
     const spiceLevel = customization.spice > 70 ? "spicy" : customization.spice < 30 ? "mild" : "medium";
     const waterLevel = customization.water > 70 ? "soupy" : customization.water < 30 ? "thick" : "standard";
+    const oilLevel = customization.oil > 70 ? "rich" : customization.oil < 30 ? "light" : "normal";
+    const tempLevel = customization.temperature > 70 ? "hot" : customization.temperature < 30 ? "cool" : "warm";
     
-    return `${saltLevel}-${spiceLevel}-${waterLevel}`;
+    return `${saltLevel}-${spiceLevel}-${waterLevel}-${oilLevel}-${tempLevel}`;
   };
 
   // Get gradient colors based on customization mood
@@ -161,8 +165,7 @@ export const CustomizeScreen = () => {
               className="relative h-48 w-full overflow-hidden bg-cover bg-center"
               style={{ backgroundImage: `url(${selectedRecipe.imageUrl})` }}
             >
-              <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent" />
-              <div className="absolute bottom-0 left-0 w-full p-4">
+              <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent" />              <div className="absolute bottom-0 left-0 w-full p-4">
                 <div className="flex flex-wrap gap-2">
                   <GlowingBorder size="sm" glowColor={getMoodGradient()}>
                     <div className="flex items-center gap-1 px-3 py-1 text-xs">
@@ -182,6 +185,34 @@ export const CustomizeScreen = () => {
                     <div className="flex items-center gap-1 px-3 py-1 text-xs">
                       <Droplets size={12} />
                       <span>{customization.water}% Water</span>
+                    </div>
+                  </GlowingBorder>
+                  
+                  <GlowingBorder size="sm" glowColor={getMoodGradient()}>
+                    <div className="flex items-center gap-1 px-3 py-1 text-xs">
+                      <Droplets size={12} />
+                      <span>{customization.oil}% Oil</span>
+                    </div>
+                  </GlowingBorder>
+                  
+                  <GlowingBorder size="sm" glowColor={getMoodGradient()}>
+                    <div className="flex items-center gap-1 px-3 py-1 text-xs">
+                      <Flame size={12} />
+                      <span>{customization.temperature}% Heat</span>
+                    </div>
+                  </GlowingBorder>
+                  
+                  <GlowingBorder size="sm" glowColor={getMoodGradient()}>
+                    <div className="flex items-center gap-1 px-3 py-1 text-xs">
+                      <Utensils size={12} />
+                      <span>{customization.grinding}% Grind</span>
+                    </div>
+                  </GlowingBorder>
+                  
+                  <GlowingBorder size="sm" glowColor={getMoodGradient()}>
+                    <div className="flex items-center gap-1 px-3 py-1 text-xs">
+                      <Utensils size={12} />
+                      <span>{customization.chopping}% Chop</span>
                     </div>
                   </GlowingBorder>
                 </div>
@@ -381,6 +412,270 @@ export const CustomizeScreen = () => {
               <span>Concentrated</span>
               <span className="font-medium text-white">{customization.water}%</span>
               <span>Diluted</span>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Oil Level Slider */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className={`mb-8 overflow-hidden rounded-2xl border border-white/10 transition-all ${getSliderBackgroundColor('oil')}`}
+          onMouseEnter={() => setActiveSlider('oil')}
+          onMouseLeave={() => setActiveSlider(null)}
+        >
+          <div className="p-6">
+            <div className="mb-6 flex items-center gap-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-yellow-500">
+                <Droplets size={20} className="text-white" />
+              </div>
+              <h3 className="text-xl font-medium">Oil Level</h3>
+              <motion.div 
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ 
+                  opacity: activeSlider === 'oil' ? 1 : 0, 
+                  scale: activeSlider === 'oil' ? 1 : 0 
+                }}
+                className="ml-auto flex cursor-pointer items-center gap-1 rounded-full bg-white/10 px-2 py-1 text-xs"
+              >
+                <Info size={12} />
+                <span>Controls richness and texture</span>
+              </motion.div>
+            </div>
+            
+            <motion.div 
+              className="mb-2 flex justify-between text-sm"
+              animate={{ scale: resetAnimation ? 0.95 : 1 }}
+            >
+              <span>Light</span>
+              <span>Normal</span>
+              <span>Rich</span>
+            </motion.div>
+            
+            <div className="relative">
+              <motion.div 
+                animate={{ 
+                  width: `${customization.oil}%`,
+                  background: activeSlider === 'oil' 
+                    ? "linear-gradient(to right, #f59e0b, #d97706)" 
+                    : "linear-gradient(to right, #9333ea, #7e22ce)"
+                }}
+                className="absolute h-2 rounded-lg bg-gradient-to-r from-purple-700 to-purple-500"
+              />
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={customization.oil}
+                onChange={(e) => updateCustomization('oil', parseInt(e.target.value))}
+                className="relative z-10 h-2 w-full appearance-none rounded-lg bg-transparent accent-amber-500"
+                onFocus={() => setActiveSlider('oil')}
+              />
+            </div>
+            
+            <div className="mt-2 flex justify-between text-xs text-gray-400">
+              <span>Healthy</span>
+              <span className="font-medium text-white">{customization.oil}%</span>
+              <span>Indulgent</span>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Temperature Level Slider */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.31 }}
+          className={`mb-8 overflow-hidden rounded-2xl border border-white/10 transition-all ${getSliderBackgroundColor('temperature')}`}
+          onMouseEnter={() => setActiveSlider('temperature')}
+          onMouseLeave={() => setActiveSlider(null)}
+        >
+          <div className="p-6">
+            <div className="mb-6 flex items-center gap-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-orange-500">
+                <Flame size={20} className="text-white" />
+              </div>
+              <h3 className="text-xl font-medium">Temperature</h3>
+              <motion.div 
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ 
+                  opacity: activeSlider === 'temperature' ? 1 : 0, 
+                  scale: activeSlider === 'temperature' ? 1 : 0 
+                }}
+                className="ml-auto flex cursor-pointer items-center gap-1 rounded-full bg-white/10 px-2 py-1 text-xs"
+              >
+                <Info size={12} />
+                <span>Cooking temperature intensity</span>
+              </motion.div>
+            </div>
+            
+            <motion.div 
+              className="mb-2 flex justify-between text-sm"
+              animate={{ scale: resetAnimation ? 0.95 : 1 }}
+            >
+              <span>Low</span>
+              <span>Medium</span>
+              <span>High</span>
+            </motion.div>
+            
+            <div className="relative">
+              <motion.div 
+                animate={{ 
+                  width: `${customization.temperature}%`,
+                  background: activeSlider === 'temperature' 
+                    ? "linear-gradient(to right, #ef4444, #dc2626)" 
+                    : "linear-gradient(to right, #9333ea, #7e22ce)"
+                }}
+                className="absolute h-2 rounded-lg bg-gradient-to-r from-purple-700 to-purple-500"
+              />
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={customization.temperature}
+                onChange={(e) => updateCustomization('temperature', parseInt(e.target.value))}
+                className="relative z-10 h-2 w-full appearance-none rounded-lg bg-transparent accent-red-500"
+                onFocus={() => setActiveSlider('temperature')}
+              />
+            </div>
+            
+            <div className="mt-2 flex justify-between text-xs text-gray-400">
+              <span>Gentle</span>
+              <span className="font-medium text-white">{customization.temperature}%</span>
+              <span>Intense</span>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Grinding Level Slider */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.32 }}
+          className={`mb-8 overflow-hidden rounded-2xl border border-white/10 transition-all ${getSliderBackgroundColor('grinding')}`}
+          onMouseEnter={() => setActiveSlider('grinding')}
+          onMouseLeave={() => setActiveSlider(null)}
+        >
+          <div className="p-6">
+            <div className="mb-6 flex items-center gap-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-gray-500 to-gray-700">
+                <Utensils size={20} className="text-white" />
+              </div>
+              <h3 className="text-xl font-medium">Grinding Level</h3>
+              <motion.div 
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ 
+                  opacity: activeSlider === 'grinding' ? 1 : 0, 
+                  scale: activeSlider === 'grinding' ? 1 : 0 
+                }}
+                className="ml-auto flex cursor-pointer items-center gap-1 rounded-full bg-white/10 px-2 py-1 text-xs"
+              >
+                <Info size={12} />
+                <span>Spice and ingredient grinding intensity</span>
+              </motion.div>
+            </div>
+            
+            <motion.div 
+              className="mb-2 flex justify-between text-sm"
+              animate={{ scale: resetAnimation ? 0.95 : 1 }}
+            >
+              <span>Coarse</span>
+              <span>Medium</span>
+              <span>Fine</span>
+            </motion.div>
+            
+            <div className="relative">
+              <motion.div 
+                animate={{ 
+                  width: `${customization.grinding}%`,
+                  background: activeSlider === 'grinding' 
+                    ? "linear-gradient(to right, #6b7280, #4b5563)" 
+                    : "linear-gradient(to right, #9333ea, #7e22ce)"
+                }}
+                className="absolute h-2 rounded-lg bg-gradient-to-r from-purple-700 to-purple-500"
+              />
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={customization.grinding}
+                onChange={(e) => updateCustomization('grinding', parseInt(e.target.value))}
+                className="relative z-10 h-2 w-full appearance-none rounded-lg bg-transparent accent-gray-500"
+                onFocus={() => setActiveSlider('grinding')}
+              />
+            </div>
+            
+            <div className="mt-2 flex justify-between text-xs text-gray-400">
+              <span>Chunky</span>
+              <span className="font-medium text-white">{customization.grinding}%</span>
+              <span>Powder</span>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Chopping Level Slider */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.33 }}
+          className={`mb-8 overflow-hidden rounded-2xl border border-white/10 transition-all ${getSliderBackgroundColor('chopping')}`}
+          onMouseEnter={() => setActiveSlider('chopping')}
+          onMouseLeave={() => setActiveSlider(null)}
+        >
+          <div className="p-6">
+            <div className="mb-6 flex items-center gap-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-emerald-500">
+                <Utensils size={20} className="text-white" />
+              </div>
+              <h3 className="text-xl font-medium">Chopping Level</h3>
+              <motion.div 
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ 
+                  opacity: activeSlider === 'chopping' ? 1 : 0, 
+                  scale: activeSlider === 'chopping' ? 1 : 0 
+                }}
+                className="ml-auto flex cursor-pointer items-center gap-1 rounded-full bg-white/10 px-2 py-1 text-xs"
+              >
+                <Info size={12} />
+                <span>Vegetable and ingredient chopping fineness</span>
+              </motion.div>
+            </div>
+            
+            <motion.div 
+              className="mb-2 flex justify-between text-sm"
+              animate={{ scale: resetAnimation ? 0.95 : 1 }}
+            >
+              <span>Rough</span>
+              <span>Diced</span>
+              <span>Minced</span>
+            </motion.div>
+            
+            <div className="relative">
+              <motion.div 
+                animate={{ 
+                  width: `${customization.chopping}%`,
+                  background: activeSlider === 'chopping' 
+                    ? "linear-gradient(to right, #10b981, #059669)" 
+                    : "linear-gradient(to right, #9333ea, #7e22ce)"
+                }}
+                className="absolute h-2 rounded-lg bg-gradient-to-r from-purple-700 to-purple-500"
+              />
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={customization.chopping}
+                onChange={(e) => updateCustomization('chopping', parseInt(e.target.value))}
+                className="relative z-10 h-2 w-full appearance-none rounded-lg bg-transparent accent-green-500"
+                onFocus={() => setActiveSlider('chopping')}
+              />
+            </div>
+            
+            <div className="mt-2 flex justify-between text-xs text-gray-400">
+              <span>Chunky</span>
+              <span className="font-medium text-white">{customization.chopping}%</span>
+              <span>Fine</span>
             </div>
           </div>
         </motion.div>

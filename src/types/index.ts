@@ -7,6 +7,8 @@ export interface Module {
   unit: string;
   status: 'normal' | 'warning' | 'critical';
   icon: string;
+  moduleType: 'dispenser' | 'processor' | 'heater' | 'cleaner';
+  operationMode?: 'continuous' | 'batch' | 'timed';
 }
 
 export interface Recipe {
@@ -28,12 +30,26 @@ export interface Ingredient {
   quantity: number;
   unit: string;
   moduleId: string;
+  processingSteps?: ProcessingStep[];
+}
+
+export interface ProcessingStep {
+  moduleId: string;
+  operation: string;
+  duration?: number;
+  temperature?: number;
+  speed?: number;
+  parameters?: Record<string, any>;
 }
 
 export interface Customization {
   salt: number;
   spice: number;
   water: number;
+  oil: number;
+  temperature: number;
+  grinding: number;
+  chopping: number;
 }
 
 export interface CartItem {

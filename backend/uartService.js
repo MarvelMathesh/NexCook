@@ -22,44 +22,111 @@ port.on('error', (err) => {
   console.error('Serial port error:', err.message);
 });
 
-// API endpoint to handle cooking instructions
+// API endpoint to send recipe to ESP32
 app.post('/api/cooking/start', (req, res) => {
   try {
-    const { moduleUpdates } = req.body;
+    const { recipe, customization } = req.body;
     
-    if (!moduleUpdates || !Array.isArray(moduleUpdates)) {
+    if (!recipe || !recipe.id) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Invalid request format. Expected moduleUpdates array.' 
+        error: 'Invalid request format. Expected recipe object.' 
       });
-    }
-
-    console.log('Received module updates:', moduleUpdates);
+    }    console.log('Sending recipe to ESP32:', recipe.id);
+    console.log('Customization:', customization);
     
-    // Format data for ESP32
-    // Format: MODULE:water=-300,spice=-10,ingredients=-150;
-    let uartMessage = 'MODULE:';
+    // Send recipe selection to ESP32 (simplified format)
+    const recipeMessage = `RECIPE:${recipe.id};`;
     
-    const updateParts = moduleUpdates.map(update => {
-      return `${update.id}=${update.change}`;
-    });
+    console.log('Sending to ESP32:', recipeMessage);
     
-    uartMessage += updateParts.join(',') + ';';
-    
-    console.log('Sending to ESP32:', uartMessage);
-    
-    // Send data to ESP32 via UART
-    port.write(uartMessage, (err) => {
+    port.write(recipeMessage, (err) => {
       if (err) {
-        console.error('Failed to write to serial port:', err.message);
-        return res.status(500).json({ success: false, error: 'Failed to communicate with cooking system.' });
+        console.error('Failed to write recipe to serial port:', err.message);
+        return res.status(500).json({ success: false, error: 'Failed to send recipe to cooking system.' });
       }
       
-      console.log('Data sent successfully to ESP32');
-      res.json({ success: true, message: 'Cooking instructions sent to system' });
+      console.log('Recipe sent successfully to ESP32:', recipeMessage);
+      res.json({ 
+        success: true, 
+        message: 'Recipe sent to ESP32. Waiting for commands...',
+        recipeSent: recipeMessage
+      });
+    });  } catch (error) {
+    console.error('Error processing request:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// Store ESP32 commands for frontend to retrieve
+let esp32Commands = [];
+
+// Listen for ESP32 responses
+port.on('data', (data) => {
+  const message = data.toString().trim();
+  console.log('Received from ESP32:', message);
+  
+  // Store the command for frontend to retrieve
+  esp32Commands.push({
+    message: message,
+    timestamp: new Date().toISOString(),
+    processed: false
+  });
+  
+  // Keep only last 20 commands to prevent memory issues
+  if (esp32Commands.length > 20) {
+    esp32Commands = esp32Commands.slice(-20);
+  }
+});
+
+// API endpoint to get ESP32 commands
+app.get('/api/esp32/commands', (req, res) => {
+  // Return only unprocessed commands
+  const unprocessedCommands = esp32Commands.filter(cmd => !cmd.processed);
+  
+  res.json({
+    success: true,
+    commands: unprocessedCommands
+  });
+});
+
+// API endpoint to mark ESP32 commands as processed
+app.post('/api/esp32/clear', (req, res) => {
+  const { commandIds } = req.body;
+  
+  if (commandIds && Array.isArray(commandIds)) {
+    // Mark specific commands as processed
+    esp32Commands.forEach(cmd => {
+      if (commandIds.includes(cmd.timestamp)) {
+        cmd.processed = true;
+      }
+    });
+  } else {
+    // Mark all commands as processed
+    esp32Commands.forEach(cmd => cmd.processed = true);
+  }
+  
+  res.json({ success: true, message: 'Commands marked as processed' });
+});
+
+// Emergency stop endpoint
+app.post('/api/cooking/emergency-stop', (req, res) => {
+  try {
+    const emergencyMessage = 'EMERGENCY:stop;';
+    
+    console.log('Sending emergency stop to ESP32:', emergencyMessage);
+    
+    port.write(emergencyMessage, (err) => {
+      if (err) {
+        console.error('Failed to write emergency stop to serial port:', err.message);
+        return res.status(500).json({ success: false, error: 'Failed to send emergency stop command.' });
+      }
+      
+      console.log('Emergency stop sent successfully to ESP32');
+      res.json({ success: true, message: 'Emergency stop command sent to system' });
     });
   } catch (error) {
-    console.error('Error processing request:', error);
+    console.error('Error processing emergency stop request:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });

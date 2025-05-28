@@ -1,13 +1,12 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { AppState, Recipe, Module, CartItem, Customization } from '../types';
+import { AppState, Recipe, Customization } from '../types';
 import { initialModules, initialRecipes } from './initialData';
 import { firebaseService } from '../services/firebase';
 import { uartService } from '../services/uartService';
-import { useEffect } from 'react';
 
 // Initialize Firebase with default data when the app starts
 // We do this outside the store to ensure it happens only once
+console.log("Initializing with updated modules:", initialModules.length, "recipes:", initialRecipes.length);
 firebaseService.initializeDatabase(initialModules, initialRecipes);
 
 export const useAppStore = create<AppState & {
@@ -27,8 +26,10 @@ export const useAppStore = create<AppState & {
   processNextQueueItem: () => void;
   startCookingQueue: () => void;
   fetchDataFromFirebase: () => Promise<void>;
+  applyStatusUpdates: (statusUpdates: { id: string; alert: boolean }[]) => void;
+  applyModuleCommands: (moduleCommands: { id: string; change: number }[]) => void;
 }>((set, get) => ({
-  currentScreen: 'home',
+    currentScreen: 'home',
   selectedRecipe: null,
   modules: initialModules, // Will be overwritten by Firebase data
   recipes: initialRecipes, // Will be overwritten by Firebase data
@@ -36,6 +37,10 @@ export const useAppStore = create<AppState & {
     salt: 50,
     spice: 50,
     water: 50,
+    oil: 50,
+    temperature: 50,
+    grinding: 50,
+    chopping: 50,
   },
   cookingProgress: 0,
   cookingStep: 0,
@@ -58,11 +63,14 @@ export const useAppStore = create<AppState & {
       set({ 
         modules: modules.length > 0 ? modules : initialModules,
         recipes: recipes.length > 0 ? recipes : initialRecipes,
-        cart: appState.cart || [],
-        customization: appState.customization || {
+        cart: appState.cart || [],        customization: appState.customization || {
           salt: 50,
           spice: 50,
           water: 50,
+          oil: 50,
+          temperature: 50,
+          grinding: 50,
+          chopping: 50,
         },
         cookingQueue: appState.cookingQueue || {
           items: [],
@@ -109,10 +117,9 @@ export const useAppStore = create<AppState & {
   
   updateModuleLevel: (moduleId, amount) => {
     set((state) => {
-      const modules = state.modules.map((module) => {
-        if (module.id === moduleId) {
+      const modules = state.modules.map((module) => {        if (module.id === moduleId) {
           const newLevel = Math.max(0, Math.min(module.maxLevel, module.currentLevel - amount));
-          const newStatus = newLevel <= module.threshold ? (newLevel === 0 ? 'critical' : 'warning') : 'normal';
+          const newStatus: 'normal' | 'warning' | 'critical' = newLevel <= module.threshold ? (newLevel === 0 ? 'critical' : 'warning') : 'normal';
           
           // Update module in Firebase (debounced)
           const updatedModule = {
@@ -168,8 +175,7 @@ export const useAppStore = create<AppState & {
       cookingQueue: newCookingQueue
     };
   }),
-  
-  startCooking: () => set((state) => {
+    startCooking: () => set((state) => {
     // Check if any module is in critical state
     const hasCriticalModule = state.modules.some(module => module.status === "critical");
     
@@ -179,95 +185,82 @@ export const useAppStore = create<AppState & {
       console.warn("Cannot start cooking: One or more modules are empty and need refilling");
       return state; // Return unchanged state
     }
-    
-    const updatedModules = [...state.modules];
-    const moduleUpdates: {id: string, data: Partial<Module>}[] = [];
-    const uartModuleUpdates: {id: string, change: number}[] = []; // For UART communication
-    
-    if (state.selectedRecipe) {
-      state.selectedRecipe.ingredients.forEach(ingredient => {
-        const moduleIndex = updatedModules.findIndex(m => m.id === ingredient.moduleId);
-        if (moduleIndex >= 0) {
-          const currentModule = updatedModules[moduleIndex];
-          const newLevel = Math.max(0, currentModule.currentLevel - ingredient.quantity);
-          const changeAmount = newLevel - currentModule.currentLevel; // This will be negative
-          const newStatus = newLevel <= currentModule.threshold ? (newLevel === 0 ? 'critical' : 'warning') : 'normal';
-          
-          updatedModules[moduleIndex] = {
-            ...currentModule,
-            currentLevel: newLevel,
-            status: newStatus,
-          };
-          
-          // Collect updates for batch processing
-          moduleUpdates.push({
-            id: currentModule.id, 
-            data: {
-              currentLevel: newLevel,
-              status: newStatus
-            }
-          });
-          
-          // Collect updates for UART communication
-          uartModuleUpdates.push({
-            id: currentModule.id,
-            change: changeAmount // Negative value representing the reduction
-          });
-        }
-      });
-      
-      // Batch update modules in Firebase for better performance
-      if (moduleUpdates.length > 0) {
-        firebaseService.updateModulesBatch(moduleUpdates);
-      }
-      
-      // Send updates to ESP32 via UART
-      if (uartModuleUpdates.length > 0) {
-        uartService.sendModuleUpdates(uartModuleUpdates)
-          .then(response => {
-            if (response.success) {
-              console.log("Successfully sent cooking instructions to ESP32:", response.message);
-            } else {
-              console.error("Failed to send cooking instructions to ESP32:", response.error);
-            }
-          })
-          .catch(error => {
-            console.error("Error sending cooking instructions to ESP32:", error);
-          });
-      }
-      
-      // Update the recipe's statistics
-      const updatedRecipes = state.recipes.map(recipe => {
-        if (recipe.id === state.selectedRecipe?.id) {
-          const updatedRecipe = { 
-            ...recipe, 
-            timesCooked: recipe.timesCooked + 1 
-          };
-          
-          // Update recipe in Firebase
-          firebaseService.updateRecipe(recipe.id, { timesCooked: updatedRecipe.timesCooked });
-          
-          return updatedRecipe;
-        }
-        return recipe;
-      });
-      
-      const newCookingQueue = {
-        ...state.cookingQueue,
-        status: 'cooking' as const
-      };
-      
-      // Update cooking queue in Firebase
-      firebaseService.updateCookingQueue(newCookingQueue);
-      
-      return {
-        modules: updatedModules,
-        recipes: updatedRecipes,
-        currentScreen: 'cooking',
-        cookingQueue: newCookingQueue
-      };
+
+    if (!state.selectedRecipe) {
+      console.warn("Cannot start cooking: No recipe selected");
+      return state;
     }
-    
+
+    // Send recipe to ESP32 and start polling for commands
+    uartService.sendRecipe(state.selectedRecipe, state.customization)
+      .then(response => {
+        if (response.success) {
+          console.log("Successfully sent recipe to ESP32:", response.message);
+          
+          // Start polling for ESP32 commands
+          const pollInterval = setInterval(async () => {
+            try {
+              const commandsResponse = await uartService.getESP32Commands();
+              
+              if (commandsResponse.success && commandsResponse.commands && commandsResponse.commands.length > 0) {
+                const processedCommands: string[] = [];
+                
+                commandsResponse.commands.forEach(command => {
+                  console.log("Processing ESP32 command:", command.message);
+                  
+                  if (command.message.startsWith('STATUS:')) {
+                    // Parse and apply status updates
+                    const statusUpdates = uartService.parseStatusMessage(command.message);
+                    get().applyStatusUpdates(statusUpdates);
+                  } else if (command.message.startsWith('MODULE:')) {
+                    // Parse and apply module commands
+                    const moduleCommands = uartService.parseModuleMessage(command.message);
+                    get().applyModuleCommands(moduleCommands);
+                  }
+                  
+                  processedCommands.push(command.timestamp);
+                });
+                
+                // Mark commands as processed
+                if (processedCommands.length > 0) {
+                  await uartService.clearESP32Commands(processedCommands);
+                }
+              }
+            } catch (error) {
+              console.error("Error polling ESP32 commands:", error);
+            }
+          }, 1000); // Poll every second
+          
+          // Store poll interval for cleanup (you might want to add this to state)
+          // Clear interval when cooking is complete or stopped
+          setTimeout(() => {
+            clearInterval(pollInterval);
+          }, (state.selectedRecipe?.cookingTime || 5) * 60 * 1000); // Stop polling after cooking time
+          
+        } else {
+          console.error("Failed to send recipe to ESP32:", response.error);
+        }
+      })
+      .catch(error => {
+        console.error("Error sending recipe to ESP32:", error);
+      });
+
+    // Update the recipe's statistics
+    const updatedRecipes = state.recipes.map(recipe => {
+      if (recipe.id === state.selectedRecipe?.id) {
+        const updatedRecipe = { 
+          ...recipe, 
+          timesCooked: recipe.timesCooked + 1 
+        };
+        
+        // Update recipe in Firebase
+        firebaseService.updateRecipe(recipe.id, { timesCooked: updatedRecipe.timesCooked });
+        
+        return updatedRecipe;
+      }
+      return recipe;
+    });
+
     const newCookingQueue = {
       ...state.cookingQueue,
       status: 'cooking' as const
@@ -276,7 +269,8 @@ export const useAppStore = create<AppState & {
     // Update cooking queue in Firebase
     firebaseService.updateCookingQueue(newCookingQueue);
     
-    return { 
+    return {
+      recipes: updatedRecipes,
       currentScreen: 'cooking',
       cookingQueue: newCookingQueue
     };
@@ -412,12 +406,50 @@ export const useAppStore = create<AppState & {
     setTimeout(() => {
       get().processNextQueueItem();
     }, 500);
-  }
-}));
+  },
 
-// Create a hook to initialize Firebase data when the app loads
-export const useFirebaseInit = () => {
-  useEffect(() => {
-    useAppStore.getState().fetchDataFromFirebase();
-  }, []);
-};
+  // Handle status updates from ESP32
+  applyStatusUpdates: (statusUpdates) => {
+    set((state) => {
+      const modules = state.modules.map((module) => {
+        const update = statusUpdates.find((s) => s.id === module.id);
+        if (update) {
+          return {
+            ...module,
+            alert: update.alert,
+          };
+        }
+        return module;
+      });
+      
+      return { modules };
+    });
+  },
+  
+  // Handle module commands from ESP32
+  applyModuleCommands: (moduleCommands) => {
+    set((state) => {
+      const modules = state.modules.map((module) => {
+        const command = moduleCommands.find((c) => c.id === module.id);
+        if (command) {
+          const newLevel = Math.max(0, Math.min(module.maxLevel, module.currentLevel + command.change));
+          const newStatus: 'normal' | 'warning' | 'critical' = newLevel <= module.threshold ? (newLevel === 0 ? 'critical' : 'warning') : 'normal';
+          
+          // Update module in Firebase (debounced)
+          const updatedModule = {
+            ...module,
+            currentLevel: newLevel,
+            status: newStatus,
+          };
+          
+          firebaseService.updateModule(module.id, updatedModule);
+          
+          return updatedModule;
+        }
+        return module;
+      });
+      
+      return { modules };
+    });
+  },
+}));

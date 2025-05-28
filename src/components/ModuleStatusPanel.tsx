@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity, AlertCircle, Check, CoffeeIcon, Droplets, Flame, RefreshCw, Soup, Utensils, AlertTriangle } from "lucide-react";
+import { 
+  Activity, AlertCircle, Check, CoffeeIcon, Droplets, Flame, RefreshCw, 
+  Soup, Utensils, AlertTriangle, Cloud, Zap, Scissors 
+} from "lucide-react";
 import { useAppStore } from "../store";
 import { Sidebar } from "./ui/Sidebar";
 import { initialModules } from "../store/initialData";
@@ -21,7 +24,6 @@ export const ModuleStatusPanel = () => {
       setShowMonitor(true);
     }
   }, [hasCriticalModule]);
-
   const getModuleIcon = (iconName: string) => {
     switch (iconName) {
       case "Droplets":
@@ -34,6 +36,12 @@ export const ModuleStatusPanel = () => {
         return <CoffeeIcon size={18} />;
       case "Flame":
         return <Flame size={18} />;
+      case "Cloud":
+        return <Cloud size={18} />;
+      case "Zap":
+        return <Zap size={18} />;
+      case "Scissors":
+        return <Scissors size={18} />;
       default:
         return <Activity size={18} />;
     }
