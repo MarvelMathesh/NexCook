@@ -1,33 +1,34 @@
-import React from "react";
-import { motion } from "framer-motion";
-import { ShoppingCart } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useAppStore } from "../store";
+import React from 'react';
+import { ShoppingCart } from 'lucide-react';
+import { useAppStore } from '../store/appStore';
+import { useNavigate } from 'react-router-dom';
 
-export const CartButton = () => {
-  const { cart } = useAppStore();
+export function CartButton() {
+  const { cart, navigateToScreen } = useAppStore();
   const navigate = useNavigate();
-  const location = useLocation();
-  
-  // Don't show the cart button on certain paths
-  const hiddenPaths = ['/cart', '/cooking', '/rating'];
-  if (hiddenPaths.includes(location.pathname)) {
+
+  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  if (totalItems === 0) {
     return null;
   }
-  
+
+  const handleCartClick = () => {
+    navigate('/cart');
+    navigateToScreen('cart');
+  };
+
   return (
-    <motion.button
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="fixed right-16 top-4 z-50 flex items-center gap-1 rounded-full bg-purple-600 px-3 py-2 backdrop-blur-md"
-      onClick={() => navigate('/cart')}
+    <button
+      onClick={handleCartClick}
+      className="fixed bottom-6 right-6 bg-orange-600 hover:bg-orange-700 text-white p-4 rounded-full shadow-lg transition-all duration-200 z-50"
     >
-      <ShoppingCart size={18} className="text-white" />
-      {cart.length > 0 && (
-        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-purple-600">
-          {cart.reduce((total, item) => total + item.quantity, 0)}
-        </div>
-      )}
-    </motion.button>
+      <div className="relative">
+        <ShoppingCart className="w-6 h-6" />
+        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+          {totalItems}
+        </span>
+      </div>
+    </button>
   );
-};
+}

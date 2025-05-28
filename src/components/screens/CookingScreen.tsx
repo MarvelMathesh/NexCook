@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { CheckCircle, ChefHat, Loader, Clock, XCircle, AlertTriangle, Flame, Droplets, Thermometer, RefreshCw, RotateCcw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAppStore } from "../../store";
+import { useAppStore } from "../../store/appStore";
 import { BackgroundBeams } from "../ui/BackgroundBeams";
 import { Sparkles } from "../ui/SparklesEffect";
 import { TextGenerateEffect } from "../ui/TextGenerateEffect";

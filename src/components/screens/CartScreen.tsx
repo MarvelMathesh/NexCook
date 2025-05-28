@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Minus, Plus, ShoppingCart, Trash2, FastForward, ChefHat, Clock, AlertCircle } from "lucide-react";
-import { useAppStore } from "../../store";
+import { useAppStore } from "../../store/appStore";
 import { useNavigation } from "../../hooks/useNavigation";
 import { GridPattern } from "../ui/GridPattern";
 import { GlowingBorder } from "../ui/GlowingBorder";

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Recipe } from '../types';
-import { useAppStore } from '../store';
+import { useAppStore } from '../store/appStore';
 
 export const useNavigation = () => {
   const navigate = useNavigate();

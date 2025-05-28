@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowLeft, Clock, Star, Filter } from "lucide-react";
-import { useAppStore } from "../../store";
+import { useAppStore } from "../../store/appStore";
 import { useNavigation } from "../../hooks/useNavigation";
 import { Card3D } from "../ui/Card3D";
 import { CardSpotlight } from "../ui/CardSpotlight";

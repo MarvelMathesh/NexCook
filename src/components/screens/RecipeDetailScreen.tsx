@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowLeft, Clock, Star, ChefHat, Thermometer, Utensils, ShoppingBag, Heart, Share, Play, PauseCircle } from "lucide-react";
 import { useParams } from "react-router-dom";
-import { useAppStore } from "../../store";
+import { useAppStore } from "../../store/appStore";
 import { useNavigation } from "../../hooks/useNavigation";
 import { PaymentQRModal } from "../PaymentQRModal";
 import { RecipeIngredientItem } from "../RecipeIngredientItem";

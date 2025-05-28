@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { ChefHat, Star } from "lucide-react";
-import { useAppStore } from "../../store";
+import { useAppStore } from "../../store/appStore";
 import { useNavigation } from "../../hooks/useNavigation";
 import { Sparkles } from "../ui/SparklesEffect";
 

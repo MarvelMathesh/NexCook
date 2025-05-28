@@ -1,22 +1,37 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Activity, AlertCircle, Check, CoffeeIcon, Droplets, Flame, RefreshCw, 
   Soup, Utensils, AlertTriangle, Cloud, Zap, Scissors 
 } from "lucide-react";
-import { useAppStore } from "../store";
+import { useAppStore } from '../store/appStore';
 import { Sidebar } from "./ui/Sidebar";
-import { initialModules } from "../store/initialData";
+import { moduleService } from '../services/moduleService';
+import { Module, ModuleAlert } from '../types';
 
 export const ModuleStatusPanel = () => {
-  const { modules, updateModuleLevel } = useAppStore();
+  const { modules } = useAppStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showMonitor, setShowMonitor] = useState(false);
   const [refilling, setRefilling] = useState<string | null>(null);
   const [isRefillAllActive, setIsRefillAllActive] = useState(false);
+  const [alerts, setAlerts] = useState<ModuleAlert[]>([]);
 
   // Check if any module is in critical state (empty)
   const hasCriticalModule = modules.some(module => module.status === "critical");
+
+  // Subscribe to module alerts
+  useEffect(() => {
+    const unsubscribe = moduleService.subscribeToAlerts((newAlerts) => {
+      setAlerts(newAlerts);
+      // Auto-show monitor panel when there are alerts
+      if (newAlerts.length > 0) {
+        setShowMonitor(true);
+      }
+    });
+
+    return unsubscribe;
+  }, []);
 
   // Auto-show the panel when a module is critical
   useEffect(() => {
@@ -55,38 +70,28 @@ export const ModuleStatusPanel = () => {
     setShowMonitor(!showMonitor);
   };
 
-  const handleRefill = (moduleId: string) => {
-    setRefilling(moduleId);
-    const initialModule = initialModules.find(m => m.id === moduleId);
-    const currentModule = modules.find(m => m.id === moduleId);
-    
-    if (initialModule && currentModule) {
-      const refillAmount = -(initialModule.maxLevel - currentModule.currentLevel);
-      updateModuleLevel(moduleId, refillAmount);
+  const handleRefill = async (moduleId: string) => {
+    try {
+      setRefilling(moduleId);
+      await moduleService.refillModule(moduleId);
       setTimeout(() => {
         setRefilling(null);
       }, 1000);
+    } catch (error) {
+      console.error('Failed to refill module:', error);
+      setRefilling(null);
     }
   };
 
-  const handleRefillAll = () => {
-    setIsRefillAllActive(true);
-    
-    // Refill all modules in sequence with a small delay between each
-    modules.forEach((module, index) => {
-      setTimeout(() => {
-        const initialModule = initialModules.find(m => m.id === module.id);
-        if (initialModule) {
-          const refillAmount = -(initialModule.maxLevel - module.currentLevel);
-          updateModuleLevel(module.id, refillAmount);
-        }
-        
-        // Reset the refill all state when done
-        if (index === modules.length - 1) {
-          setTimeout(() => setIsRefillAllActive(false), 500);
-        }
-      }, index * 300);
-    });
+  const handleRefillAll = async () => {
+    try {
+      setIsRefillAllActive(true);
+      await moduleService.refillAllModules();
+      setTimeout(() => setIsRefillAllActive(false), 500);
+    } catch (error) {
+      console.error('Failed to refill all modules:', error);
+      setIsRefillAllActive(false);
+    }
   };
 
   const sidebarItems = [
