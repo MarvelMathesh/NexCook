@@ -9,17 +9,67 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // Configure Serial Port for UART communication with ESP32
+console.log('Initializing serial port...');
+
 const port = new SerialPort({ 
-  path: '/dev/ttyUSB0', // Use '/dev/ttyS0' for GPIO serial port
+  path: 'COM3', // Windows COM port for ESP32
   baudRate: 115200 
 });
 
 port.on('open', () => {
-  console.log('Serial port opened successfully');
+  console.log('✅ Serial port opened successfully');
+  console.log('Port details:', {
+    path: port.path,
+    baudRate: port.baudRate,
+    isOpen: port.isOpen
+  });
 });
 
 port.on('error', (err) => {
-  console.error('Serial port error:', err.message);
+  console.error('❌ Serial port error:', err.message);
+  
+  if (err.message.includes('Access denied') || err.message.includes('Permission denied')) {
+    console.log('💡 Permission issue - you may need to run with sudo or add user to dialout group');
+  }
+  
+  if (err.message.includes('No such file or directory')) {
+    console.log('💡 Port not found - check ESP32 connection and port path');
+  }
+});
+
+// Store ESP32 commands for frontend to retrieve
+let esp32Commands = [];
+
+// Listen for ESP32 responses
+let messageBuffer = '';
+
+port.on('data', (data) => {
+  const chunk = data.toString();
+  messageBuffer += chunk;
+  
+  // Process complete messages ending with ';'
+  while (messageBuffer.includes(';')) {
+    const messageEnd = messageBuffer.indexOf(';');
+    const completeMessage = messageBuffer.substring(0, messageEnd);
+    messageBuffer = messageBuffer.substring(messageEnd + 1);    // Only process STATUS and MODULE commands
+    if (completeMessage.startsWith('STATUS:') || 
+        completeMessage.startsWith('MODULE:')) {
+      
+      console.log('📥 ESP32 Command:', completeMessage);
+      
+      // Store the command for frontend to retrieve
+      esp32Commands.push({
+        message: completeMessage,
+        timestamp: new Date().toISOString(),
+        processed: false
+      });
+      
+      // Keep only last 10 commands to prevent memory issues
+      if (esp32Commands.length > 10) {
+        esp32Commands = esp32Commands.slice(-10);
+      }
+    }
+  }
 });
 
 // API endpoint to send recipe to ESP32
@@ -34,11 +84,12 @@ app.post('/api/cooking/start', (req, res) => {
       });
     }    console.log('Sending recipe to ESP32:', recipe.id);
     console.log('Customization:', customization);
-    
-    // Send recipe selection to ESP32 (simplified format)
+      // Send recipe selection to ESP32 (simplified format)
     const recipeMessage = `RECIPE:${recipe.id};`;
     
     console.log('Sending to ESP32:', recipeMessage);
+    console.log('Port state - isOpen:', port.isOpen);
+    console.log('Buffer contents:', Buffer.from(recipeMessage));
     
     port.write(recipeMessage, (err) => {
       if (err) {
@@ -47,35 +98,16 @@ app.post('/api/cooking/start', (req, res) => {
       }
       
       console.log('Recipe sent successfully to ESP32:', recipeMessage);
+      console.log('Bytes written:', Buffer.from(recipeMessage).length);
+      
       res.json({ 
         success: true, 
         message: 'Recipe sent to ESP32. Waiting for commands...',
         recipeSent: recipeMessage
       });
-    });  } catch (error) {
+    });} catch (error) {
     console.error('Error processing request:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
-  }
-});
-
-// Store ESP32 commands for frontend to retrieve
-let esp32Commands = [];
-
-// Listen for ESP32 responses
-port.on('data', (data) => {
-  const message = data.toString().trim();
-  console.log('Received from ESP32:', message);
-  
-  // Store the command for frontend to retrieve
-  esp32Commands.push({
-    message: message,
-    timestamp: new Date().toISOString(),
-    processed: false
-  });
-  
-  // Keep only last 20 commands to prevent memory issues
-  if (esp32Commands.length > 20) {
-    esp32Commands = esp32Commands.slice(-20);
   }
 });
 
@@ -105,30 +137,7 @@ app.post('/api/esp32/clear', (req, res) => {
     // Mark all commands as processed
     esp32Commands.forEach(cmd => cmd.processed = true);
   }
-  
-  res.json({ success: true, message: 'Commands marked as processed' });
-});
-
-// Emergency stop endpoint
-app.post('/api/cooking/emergency-stop', (req, res) => {
-  try {
-    const emergencyMessage = 'EMERGENCY:stop;';
-    
-    console.log('Sending emergency stop to ESP32:', emergencyMessage);
-    
-    port.write(emergencyMessage, (err) => {
-      if (err) {
-        console.error('Failed to write emergency stop to serial port:', err.message);
-        return res.status(500).json({ success: false, error: 'Failed to send emergency stop command.' });
-      }
-      
-      console.log('Emergency stop sent successfully to ESP32');
-      res.json({ success: true, message: 'Emergency stop command sent to system' });
-    });
-  } catch (error) {
-    console.error('Error processing emergency stop request:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
-  }
+    res.json({ success: true, message: 'Commands marked as processed' });
 });
 
 // Start the server
