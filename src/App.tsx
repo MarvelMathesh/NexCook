@@ -20,6 +20,7 @@ import { ModuleStatusPanel } from './components/ModuleStatusPanel';
 import { CartButton } from './components/CartButton';
 import { SystemStatusIndicator } from './components/ui/SystemStatusIndicator';
 import { ErrorNotifications } from './components/ui/ErrorNotifications';
+import { SoundToggle } from './components/ui/SoundToggle';
 
 /**
  * Main App Component with Clean Architecture
@@ -137,9 +138,11 @@ function GlobalComponents() {
       </>
     );
   }
-
   return (
     <>
+      {/* Sound Toggle */}
+      <SoundToggle />
+      
       {/* Module Status Panel */}
       <ModuleStatusPanel />
       

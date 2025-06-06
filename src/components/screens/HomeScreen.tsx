@@ -6,7 +6,6 @@ import { useNavigation } from "../../hooks/useNavigation";
 
 export const HomeScreen = () => {
   const { goToRecipes, goToRecipeDetails } = useNavigation();
-
   // Premium recipe showcase data using available images
   const recipeSlides = [
     {
@@ -14,28 +13,28 @@ export const HomeScreen = () => {
       button: "View Recipe",
       description: "Comfort food redefined with precise temperature control",
       src: "/assets/images/masoor-dal.jpg",
-      onClick: () => goToRecipeDetails("1") // Navigate to recipe details
+      onClick: () => goToRecipeDetails("masoor-dal") // Navigate to recipe details
     },
     {
       title: "Spinach Soup",
       button: "View Recipe", 
       description: "Nutrient-rich blend with optimal texture preservation",
       src: "/assets/images/spinach-soup.jpg",
-      onClick: () => goToRecipeDetails("2")
+      onClick: () => goToRecipeDetails("spinach-soup")
     },
     {
       title: "Tomato Soup",
       button: "View Recipe",
       description: "Classic flavors enhanced by smart cooking technology",
       src: "/assets/images/tomato-soup.jpg",
-      onClick: () => goToRecipeDetails("3")
+      onClick: () => goToRecipeDetails("tomato-soup")
     },
     {
       title: "Tur Dal",
       button: "View Recipe",
       description: "Traditional recipe with modern precision",
       src: "/assets/images/tur-dal.jpg",
-      onClick: () => goToRecipeDetails("4")
+      onClick: () => goToRecipeDetails("tur-dal")
     }
   ];
   return (

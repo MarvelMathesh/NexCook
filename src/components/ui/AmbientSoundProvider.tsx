@@ -19,8 +19,7 @@ interface AmbientSoundProviderProps {
 
 export const AmbientSoundProvider = ({ children }: AmbientSoundProviderProps) => {
   const ambientSound = useAmbientSound('/assets/sounds/sound.mp3', {
-    volume: 0.2, // Subtle ambient volume
-    autoPlay: true,
+    volume: 0.15, // Subtle ambient volume
     loop: true
   });
 

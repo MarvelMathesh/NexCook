@@ -130,14 +130,17 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
                 {description}
               </p>
             )}
-          </div>
-            <div className="flex justify-center mt-6">
+          </div>            <div className="flex justify-center mt-6">
             <button 
               className="group relative px-8 py-3 bg-white/95 backdrop-blur-sm text-black font-medium text-sm rounded-full border border-white/20 hover:bg-white transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl flex items-center gap-2"
-              onClick={onClick}
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent event bubbling
+                if (onClick) onClick();
+              }}
             >
               {button}
-              <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />            </button>
+              <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
+            </button>
           </div>
         </article>
       </div>
