@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../../store/appStore";
 import { BackgroundBeams } from "../ui/BackgroundBeams";
 import { Sparkles } from "../ui/SparklesEffect";
-import { TextGenerateEffect } from "../ui/TextGenerateEffect";
+
 import { GlowingBorder } from "../ui/GlowingBorder";
 import { FireParticles } from "../ui/FireParticles";
 import { Tooltip } from "../ui/Tooltip";

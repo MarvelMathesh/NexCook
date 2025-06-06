@@ -7,7 +7,7 @@ import { useNavigation } from "../../hooks/useNavigation";
 import { GridPattern } from "../ui/GridPattern";
 import { GlowingBorder } from "../ui/GlowingBorder";
 import { HoverCard } from "../ui/HoverCard";
-import { TextGenerateEffect } from "../ui/TextGenerateEffect";
+
 import { AnimatedSection } from "../ui/AnimatedSection";
 import { CardSpotlight } from "../ui/CardSpotlight";
 
@@ -141,11 +141,9 @@ export const CustomizeScreen = () => {
           </button>
         </HoverCard>
         <div>
-          <h1 className="text-3xl font-bold">Customize Recipe</h1>
-          <TextGenerateEffect 
-            words={`Adjust parameters for ${selectedRecipe.name}`}
-            className="text-sm text-gray-300"
-          />
+          <h1 className="text-3xl font-bold">Customize Recipe</h1>          <p className="text-sm text-gray-300">
+            Adjust parameters for {selectedRecipe.name}
+          </p>
         </div>
         <motion.button
           whileHover={{ scale: 1.1, rotate: 180 }}

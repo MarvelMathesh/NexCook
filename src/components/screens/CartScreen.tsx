@@ -5,7 +5,7 @@ import { useAppStore } from "../../store/appStore";
 import { useNavigation } from "../../hooks/useNavigation";
 import { GridPattern } from "../ui/GridPattern";
 import { GlowingBorder } from "../ui/GlowingBorder";
-import { TextGenerateEffect } from "../ui/TextGenerateEffect";
+
 import { HoverCard } from "../ui/HoverCard";
 import { AnimatedSection } from "../ui/AnimatedSection";
 import { CardSpotlight } from "../ui/CardSpotlight";
@@ -119,13 +119,11 @@ export const CartScreen = () => {
           </button>
         </HoverCard>
         <div>
-          <h1 className="text-3xl font-bold">Your Cooking Queue</h1>
-          <TextGenerateEffect 
-            words={cart.length === 0 
+          <h1 className="text-3xl font-bold">Your Cooking Queue</h1>          <p className="text-sm text-gray-300">
+            {cart.length === 0 
               ? "Your queue is empty" 
               : `${totalItems} item${totalItems !== 1 ? 's' : ''} ready to cook`}
-            className="text-sm text-gray-300"
-          />
+          </p>
         </div>
       </motion.div>
 

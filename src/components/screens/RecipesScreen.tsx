@@ -5,7 +5,7 @@ import { useAppStore } from "../../store/appStore";
 import { useNavigation } from "../../hooks/useNavigation";
 import { Card3D } from "../ui/Card3D";
 import { CardSpotlight } from "../ui/CardSpotlight";
-import { TextGenerateEffect } from "../ui/TextGenerateEffect";
+
 import { containerVariants, itemVariants, springTransition } from "../../utils/animations";
 import { HoverCard } from "../ui/HoverCard";
 import { GridPattern } from "../ui/GridPattern";
@@ -74,11 +74,9 @@ export const RecipesScreen = () => {
               </button>
             </HoverCard>
             <div>
-              <h1 className="text-3xl font-bold">Recipe Selection</h1>
-              <TextGenerateEffect 
-                words="Choose from our curated collection of smart recipes"
-                className="text-sm text-gray-300"
-              />
+              <h1 className="text-3xl font-bold">Recipe Selection</h1>              <p className="text-sm text-gray-300">
+                Choose from our curated collection of smart recipes
+              </p>
             </div>
           </motion.div>
 
