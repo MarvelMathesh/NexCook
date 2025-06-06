@@ -49,7 +49,7 @@ export const Sidebar = ({
       >
         <div className="flex h-full flex-col">
           <div className="mb-8 flex items-center justify-between pt-2">
-            <h2 className="text-xl font-bold">NexCook</h2>
+            <h2 className="text-xl font-bold">VIT Mitatronics</h2>
             <button
               onClick={onClose}
               className="rounded-full p-1 hover:bg-white/10"
@@ -97,7 +97,7 @@ export const Sidebar = ({
           <div className="mt-auto">
             <div className="rounded-lg bg-white/5 p-4">
               <p className="text-sm text-gray-300">
-                Your NexCook module is running the latest firmware version.
+                Your VIT Mitatronics module is running the latest firmware version.
               </p>
             </div>
           </div>

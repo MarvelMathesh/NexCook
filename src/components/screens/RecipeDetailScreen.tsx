@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowLeft, Clock, Star, ChefHat, Thermometer, Utensils, ShoppingBag, Heart, Share, Play, PauseCircle } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { useAppStore } from "../../store/appStore";
 import { useNavigation } from "../../hooks/useNavigation";
-import { PaymentQRModal } from "../PaymentQRModal";
 import { RecipeIngredientItem } from "../RecipeIngredientItem";
 import { GridPattern } from "../ui/GridPattern";
 import { GlowingBorder } from "../ui/GlowingBorder";
@@ -12,12 +11,10 @@ import { AnimatedSection } from "../ui/AnimatedSection";
 import { springTransition } from "../../utils/animations";
 
 export const RecipeDetailScreen = () => {
-  const { id } = useParams<{ id: string }>();
-  const { recipes, selectedRecipe, selectRecipe, customization, addToCart } = useAppStore();
+  const { id } = useParams<{ id: string }>();  const { recipes, selectedRecipe, selectRecipe, customization, addToCart } = useAppStore();
   const { goToRecipes, goToCustomize } = useNavigation();
   const [quantity, setQuantity] = useState(1);
   const [addToCartAnimation, setAddToCartAnimation] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isPreviewPlaying, setIsPreviewPlaying] = useState(false);
   
@@ -54,26 +51,13 @@ export const RecipeDetailScreen = () => {
   }
 
   const handleAddToCart = () => {
-    addToCart(selectedRecipe.id, quantity, customization);
-    setAddToCartAnimation(true);
+    addToCart(selectedRecipe.id, quantity, customization);    setAddToCartAnimation(true);
     setTimeout(() => setAddToCartAnimation(false), 500);
   };
-  
-  const handleCustomizeClick = () => {
-    // Show payment modal instead of going directly to customize
-    setShowPaymentModal(true);
-  };
-  
-  const handlePaymentComplete = () => {
-    // Close modal and proceed to customize screen
-    setShowPaymentModal(false);
+    const handleCustomizeClick = () => {
+    // Go directly to customize screen
     goToCustomize(selectedRecipe.id);
   };
-
-  // Calculate a mock price based on cooking time and ingredients count
-  const recipePrice = Number(
-    (selectedRecipe?.cookingTime * 0.5 + selectedRecipe?.ingredients.length * 1.25).toFixed(2)
-  );
 
   return (
     <div ref={containerRef} className="relative min-h-screen w-full bg-black text-white">
@@ -203,17 +187,11 @@ export const RecipeDetailScreen = () => {
               <div className="flex items-center gap-1 rounded-full bg-black/50 px-3 py-2 backdrop-blur-sm">
                 <ChefHat size={16} className="text-purple-400" />
                 <span className="text-sm font-medium text-white">Easy</span>
-              </div>
-              <div className="flex items-center gap-1 rounded-full bg-black/50 px-3 py-2 backdrop-blur-sm">
+              </div>              <div className="flex items-center gap-1 rounded-full bg-black/50 px-3 py-2 backdrop-blur-sm">
                 <Thermometer size={16} className="text-purple-400" />
                 <span className="text-sm font-medium text-white">340 kcal</span>
               </div>
             </div>
-            <GlowingBorder size="sm">
-              <div className="px-3 py-1">
-                <span className="font-bold">${recipePrice}</span>
-              </div>
-            </GlowingBorder>
           </div>
         </AnimatedSection>
         
@@ -227,7 +205,7 @@ export const RecipeDetailScreen = () => {
           >
             {selectedRecipe.description}
             {/* Extended description for better UX */}
-            {" "}This recipe has been optimized for NexCook's advanced cooking technology, ensuring perfect results every time. The precise temperature control and ingredient dispensing system guarantees consistent flavor and texture.
+            {" "}This recipe has been optimized for VIT Mitatronics's advanced cooking technology, ensuring perfect results every time. The precise temperature control and ingredient dispensing system guarantees consistent flavor and texture.
           </motion.p>
         </AnimatedSection>
 
@@ -326,19 +304,9 @@ export const RecipeDetailScreen = () => {
               onClick={handleCustomizeClick}
             >
               Customize & Cook
-            </motion.button>
-          </div>
+            </motion.button>          </div>
         </div>
       </motion.div>
-
-      {/* Enhanced Payment QR Modal */}
-      <PaymentQRModal
-        isOpen={showPaymentModal}
-        onClose={() => setShowPaymentModal(false)}
-        onPaymentComplete={handlePaymentComplete}
-        recipeName={selectedRecipe?.name || ""}
-        amount={recipePrice}
-      />
     </div>
   );
 };

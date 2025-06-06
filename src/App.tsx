@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAppStore } from './store/appStore';
 import { LoadingScreen } from './components/ui/LoadingScreen';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { NotificationProvider } from './components/ui/NotificationProvider';
+import { AmbientSoundProvider } from './components/ui/AmbientSoundProvider';
 
 // Screens
 import { HomeScreen } from './components/screens/HomeScreen';
@@ -89,31 +90,32 @@ function App() {
       </div>
     );
   }
-
   return (
     <ErrorBoundary>
-      <NotificationProvider>
-        <div className="min-h-screen bg-black text-white relative">
-          <BrowserRouter>
-            {/* Main Content */}
-            <main className="relative z-10">
-              <Routes>
-                <Route path="/" element={<HomeScreen />} />
-                <Route path="/recipes" element={<RecipesScreen />} />
-                <Route path="/recipe/:id" element={<RecipeDetailScreen />} />
-                <Route path="/customize/:id" element={<CustomizeScreen />} />
-                <Route path="/cooking" element={<CookingScreen />} />
-                <Route path="/rating" element={<RatingScreen />} />
-                <Route path="/cart" element={<CartScreen />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </main>
+      <AmbientSoundProvider>
+        <NotificationProvider>
+          <div className="min-h-screen bg-black text-white relative">
+            <BrowserRouter>
+              {/* Main Content */}
+              <main className="relative z-10">
+                <Routes>
+                  <Route path="/" element={<HomeScreen />} />
+                  <Route path="/recipes" element={<RecipesScreen />} />
+                  <Route path="/recipe/:id" element={<RecipeDetailScreen />} />
+                  <Route path="/customize/:id" element={<CustomizeScreen />} />
+                  <Route path="/cooking" element={<CookingScreen />} />
+                  <Route path="/rating" element={<RatingScreen />} />
+                  <Route path="/cart" element={<CartScreen />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </main>
 
-            {/* Global UI Components */}
-            <GlobalComponents />
-          </BrowserRouter>
-        </div>
-      </NotificationProvider>
+              {/* Global UI Components */}
+              <GlobalComponents />
+            </BrowserRouter>
+          </div>
+        </NotificationProvider>
+      </AmbientSoundProvider>
     </ErrorBoundary>
   );
 }

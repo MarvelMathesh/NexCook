@@ -1,7 +1,6 @@
-{
-  "name": "nexcook-backend",
+{  "name": "vitmitatronics-backend",
   "version": "1.0.0",
-  "description": "Backend service for NexCook to handle UART communication with ESP32",
+  "description": "Backend service for VIT Mitatronics to handle UART communication with ESP32",
   "main": "uartService.js",
   "scripts": {
     "start": "node uartService.js"

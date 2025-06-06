@@ -1,11 +1,11 @@
-import React from "react";
 import { motion } from "framer-motion";
 import { ChefHat } from "lucide-react";
 import { Carousel } from "../ui/Carousel";
+import { SoundToggle } from "../ui/SoundToggle";
 import { useNavigation } from "../../hooks/useNavigation";
 
 export const HomeScreen = () => {
-  const { goToRecipes, handleRecipeSelect } = useNavigation();
+  const { goToRecipes, goToRecipeDetails } = useNavigation();
 
   // Premium recipe showcase data using available images
   const recipeSlides = [
@@ -14,33 +14,35 @@ export const HomeScreen = () => {
       button: "View Recipe",
       description: "Comfort food redefined with precise temperature control",
       src: "/assets/images/masoor-dal.jpg",
-      onClick: () => handleRecipeSelect("1") // Assuming recipe IDs start from "1"
+      onClick: () => goToRecipeDetails("1") // Navigate to recipe details
     },
     {
       title: "Spinach Soup",
       button: "View Recipe", 
       description: "Nutrient-rich blend with optimal texture preservation",
       src: "/assets/images/spinach-soup.jpg",
-      onClick: () => handleRecipeSelect("2")
+      onClick: () => goToRecipeDetails("2")
     },
     {
       title: "Tomato Soup",
       button: "View Recipe",
       description: "Classic flavors enhanced by smart cooking technology",
       src: "/assets/images/tomato-soup.jpg",
-      onClick: () => handleRecipeSelect("3")
+      onClick: () => goToRecipeDetails("3")
     },
     {
       title: "Tur Dal",
       button: "View Recipe",
       description: "Traditional recipe with modern precision",
       src: "/assets/images/tur-dal.jpg",
-      onClick: () => handleRecipeSelect("4")
+      onClick: () => goToRecipeDetails("4")
     }
   ];
-
   return (
     <div className="relative min-h-screen w-full bg-gradient-to-br from-black via-gray-900 to-black">
+      {/* Sound Toggle */}
+      <SoundToggle />
+      
       {/* Subtle ambient lighting effect */}
       <div className="absolute inset-0 bg-gradient-to-t from-purple-950/20 via-transparent to-transparent" />
       
@@ -65,9 +67,8 @@ export const HomeScreen = () => {
             >
               <ChefHat size={64} className="mx-auto text-white/90" />
             </motion.div>
-            
-            <h1 className="text-6xl md:text-7xl lg:text-8xl font-extralight tracking-tight text-white mb-6">
-              Nex<span className="font-light text-purple-300">Cook</span>
+              <h1 className="text-6xl md:text-7xl lg:text-8xl font-extralight tracking-tight text-white mb-6">
+              VIT <span className="font-light text-purple-300">Mitatronics</span>
             </h1>
             
             <p className="text-xl md:text-2xl font-light text-white/70 max-w-2xl mx-auto leading-relaxed">
@@ -133,9 +134,8 @@ export const HomeScreen = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 2, duration: 0.8 }}
           className="py-8 text-center"
-        >
-          <p className="text-white/30 text-xs font-light tracking-wide">
-            NexCook © 2025 • Precision in Every Dish
+        >          <p className="text-white/30 text-xs font-light tracking-wide">
+            VIT Mitatronics © 2025 • Precision in Every Dish
           </p>
         </motion.footer>
 
