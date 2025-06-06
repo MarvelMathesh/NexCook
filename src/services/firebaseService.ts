@@ -99,7 +99,6 @@ export class FirebaseService {
       throw error;
     }
   }
-
   /**
    * Initialize database with default data if it doesn't exist
    */
@@ -107,11 +106,21 @@ export class FirebaseService {
     await this.initialize();
     
     try {
-      // Check if data already exists
-      const stateSnapshot = await getDoc(this.stateDoc);
+      // Check if data already exists by checking multiple collections
+      const [stateSnapshot, modulesSnapshot, recipesSnapshot] = await Promise.all([
+        getDoc(this.stateDoc),
+        getDocs(this.modulesCollection),
+        getDocs(this.recipesCollection)
+      ]);
+        const needsInitialization = !stateSnapshot.exists() || 
+                                  modulesSnapshot.empty || 
+                                  recipesSnapshot.empty ||
+                                  modulesSnapshot.size === 0 ||
+                                  recipesSnapshot.size === 0;
       
-      if (!stateSnapshot.exists()) {
+      if (needsInitialization) {
         console.log("Initializing Firebase database with default data...");
+        console.log(`State exists: ${stateSnapshot.exists()}, Modules count: ${modulesSnapshot.size}, Recipes count: ${recipesSnapshot.size}`);
         
         // Use a batch for better performance and atomicity
         const batch = writeBatch(this.db);

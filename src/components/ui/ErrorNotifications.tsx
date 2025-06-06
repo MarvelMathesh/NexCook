@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useAppStore } from '../../store/appStore';
 import { useNotifications } from './NotificationProvider';
 import { AppError } from '../../types';
@@ -7,7 +7,7 @@ import { AppError } from '../../types';
  * Error Notifications component that displays app errors as notifications
  */
 export function ErrorNotifications() {
-  const { errors, clearError } = useAppStore();
+  const { errors, removeError } = useAppStore();
   const { addNotification } = useNotifications();
 
   // Convert errors to notifications
@@ -17,19 +17,17 @@ export function ErrorNotifications() {
         // Create notification from error
         addNotification({
           type: 'error',
-          title: error.title || 'Error Occurred',
+          title: `${error.type.charAt(0).toUpperCase() + error.type.slice(1)} Error`,
           message: error.message,
-          duration: error.persistent ? 0 : 8000,
-          persistent: error.persistent || false
+          duration: 8000,
+          persistent: false
         });
 
-        // Clear non-persistent errors after showing notification
-        if (!error.persistent) {
-          clearError(error.id);
-        }
+        // Clear the error after showing notification
+        removeError(error.id);
       });
     }
-  }, [errors, addNotification, clearError]);
+  }, [errors, addNotification, removeError]);
 
   return null; // This component doesn't render anything directly
 }

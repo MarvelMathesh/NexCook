@@ -3,10 +3,8 @@ import { subscribeWithSelector } from 'zustand/middleware';
 import { 
   AppState, 
   Recipe, 
-  Module, 
   Customization, 
   CartItem, 
-  CookingStatus,
   AppScreen,
   AppError
 } from '../types';
@@ -39,10 +37,13 @@ interface AppStore extends AppState {
   removeFromCart: (itemId: string) => void;
   updateCartItem: (itemId: string, quantity: number) => void;
   clearCart: () => void;
-  
   // Cooking Actions
   startCooking: () => Promise<boolean>;
   stopCooking: () => void;
+  setCookingProgress: (progress: number) => void;
+  setCookingStep: (step: number) => void;
+  resetCooking: () => void;
+  processNextQueueItem: () => void;
   
   // Module Actions
   refillModule: (moduleId: string) => Promise<boolean>;
@@ -90,9 +91,11 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector((set, get) =
   cookingStep: 0,
   ratingValue: 0,
   isOnline: navigator.onLine,
+  esp32Connected: false,
+  firebaseConnected: false,
+  systemStatus: 'offline',
   errors: [],
-  
-  // Initialization
+    // Initialization
   initializeApp: async () => {
     try {
       // Set up service listeners BEFORE initialization to avoid race conditions
@@ -101,6 +104,11 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector((set, get) =
       // Initialize services with error handling
       try {
         await firebaseService.initialize();
+        
+        // Initialize database with default data if needed
+        const { initialModules, initialRecipes } = await import('./initialData');
+        await firebaseService.initializeDatabase(initialModules, initialRecipes);
+        
       } catch (error) {
         console.warn('Firebase initialization failed, continuing with local data:', error);
       }
@@ -232,9 +240,31 @@ export const useAppStore = create<AppStore>()(subscribeWithSelector((set, get) =
       return false;
     }
   },
-  
-  stopCooking: () => {
+    stopCooking: () => {
     recipeService.stopCooking();
+  },
+  
+  setCookingProgress: (progress: number) => {
+    const clampedProgress = Math.max(0, Math.min(100, progress));
+    set({ cookingProgress: clampedProgress });
+  },
+    setCookingStep: (step: number) => {
+    const clampedStep = Math.max(0, step);
+    set({ cookingStep: clampedStep });
+  },
+  
+  resetCooking: () => {
+    set({ 
+      cookingProgress: 0, 
+      cookingStep: 0,
+      ratingValue: 0
+    });
+    recipeService.stopCooking();
+  },
+    processNextQueueItem: () => {
+    // This would typically be handled by the recipe service
+    // For now, just trigger the next item in queue
+    recipeService.processNextQueueItem();
   },
   
   // Module Actions
@@ -404,9 +434,10 @@ function setupServiceListeners(
       });
     }
   });
-  
   // ESP32 service listeners
   esp32Service.onConnectionChange((connected) => {
+    set({ esp32Connected: connected });
+    
     if (!connected) {
       get().addError({
         type: 'hardware',
@@ -414,7 +445,21 @@ function setupServiceListeners(
         resolved: false
       });
     }
+    
+    // Update system status
+    updateSystemStatus(set, get);
   });
+  
+  // Check Firebase connection status periodically
+  const checkFirebaseConnection = () => {
+    const connected = firebaseService.isConnected();
+    set({ firebaseConnected: connected });
+    updateSystemStatus(set, get);
+  };
+  
+  // Initial check and periodic monitoring
+  checkFirebaseConnection();
+  setInterval(checkFirebaseConnection, 5000); // Check every 5 seconds
   
   // Online/offline listeners
   const handleOnline = () => get().setOnlineStatus(true);
@@ -422,6 +467,28 @@ function setupServiceListeners(
   
   window.addEventListener('online', handleOnline);
   window.addEventListener('offline', handleOffline);
+}
+
+// Helper function to update overall system status
+function updateSystemStatus(
+  set: (partial: Partial<AppStore>) => void,
+  get: () => AppStore
+) {
+  const { isOnline, esp32Connected, firebaseConnected } = get();
+  
+  let systemStatus: 'online' | 'hardware-error' | 'cloud-error' | 'offline';
+  
+  if (!isOnline) {
+    systemStatus = 'offline';
+  } else if (!esp32Connected) {
+    systemStatus = 'hardware-error';
+  } else if (!firebaseConnected) {
+    systemStatus = 'cloud-error';
+  } else {
+    systemStatus = 'online';
+  }
+  
+  set({ systemStatus });
 }
 
 // Auto-sync with Firebase when cart or customization changes

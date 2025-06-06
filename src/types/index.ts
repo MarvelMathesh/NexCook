@@ -118,6 +118,9 @@ export interface AppState {
   
   // System State
   isOnline: boolean;
+  esp32Connected: boolean;
+  firebaseConnected: boolean;
+  systemStatus: 'online' | 'hardware-error' | 'cloud-error' | 'offline';
   lastSyncAt?: string;
 }
 

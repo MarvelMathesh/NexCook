@@ -12,7 +12,7 @@ app.use(bodyParser.json());
 console.log('Initializing serial port...');
 
 const port = new SerialPort({ 
-  path: 'COM6', // Windows COM port for ESP32
+  path: 'COM3', // Windows COM port for ESP32
   baudRate: 9600 
 });
 
@@ -109,6 +109,19 @@ app.post('/api/cooking/start', (req, res) => {
     console.error('Error processing request:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
+});
+
+// API endpoint to check hardware connection status
+app.get('/api/esp32/status', (req, res) => {
+  res.json({
+    success: true,
+    connected: port.isOpen,
+    port: {
+      path: port.path,
+      baudRate: port.baudRate,
+      isOpen: port.isOpen
+    }
+  });
 });
 
 // API endpoint to get ESP32 commands

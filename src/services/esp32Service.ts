@@ -1,4 +1,4 @@
-import { Recipe, Customization, Module } from '../types';
+import { Recipe, Customization } from '../types';
 
 /**
  * ESP32Service - Handles hardware-level communication
@@ -74,6 +74,41 @@ export class ESP32Service {
   }
 
   /**
+   * Check connection status with backend
+   */
+  public async checkConnectionStatus(): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.backendUrl}/api/esp32/status`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to get status');
+      }
+
+      const connected = data.connected && data.port?.isOpen;
+      
+      if (this.isConnected !== connected) {
+        this.isConnected = connected;
+        this.notifyConnectionListeners(connected);
+        console.log(`ESP32 hardware ${connected ? 'connected' : 'disconnected'}`);
+      }
+      
+      return connected;
+    } catch (error) {
+      if (this.isConnected) {
+        this.isConnected = false;
+        this.notifyConnectionListeners(false);
+        console.warn('ESP32 backend disconnected:', error instanceof Error ? error.message : 'Unknown error');
+      }
+      return false;
+    }
+  }
+  /**
    * Get latest commands from ESP32
    */
   public async getCommands(): Promise<ESP32Command[]> {
@@ -89,20 +124,10 @@ export class ESP32Service {
       if (!data.success) {
         throw new Error(data.error || 'Failed to get commands');
       }
-
-      if (!this.isConnected) {
-        this.isConnected = true;
-        this.notifyConnectionListeners(true);
-        console.log('ESP32 backend connected');
-      }
       
       return data.commands || [];
     } catch (error) {
-      if (this.isConnected) {
-        this.isConnected = false;
-        this.notifyConnectionListeners(false);
-        console.warn('ESP32 backend disconnected:', error instanceof Error ? error.message : 'Unknown error');
-      }
+      console.warn('Failed to get ESP32 commands:', error instanceof Error ? error.message : 'Unknown error');
       return [];
     }
   }
@@ -182,7 +207,6 @@ export class ESP32Service {
       })
       .filter((item): item is ModuleLevelUpdate => item !== null);
   }
-
   /**
    * Start polling for ESP32 commands
    */
@@ -192,18 +216,26 @@ export class ESP32Service {
     }
 
     const poll = async () => {
+      // Check connection status first
+      await this.checkConnectionStatus();
+      
+      // Get commands if connected
       const commands = await this.getCommands();
       if (commands.length > 0) {
         this.notifyCommandListeners(commands);
       }
+      
       // Restart polling with updated interval based on connection status
       if (this.pollingInterval) {
         clearInterval(this.pollingInterval);
-        this.pollingInterval = setInterval(poll, this.isConnected ? 2000 : 10000);
+        this.pollingInterval = setInterval(poll, this.isConnected ? this.POLLING_INTERVAL : 10000);
       }
     };
 
-    this.pollingInterval = setInterval(poll, 2000);
+    this.pollingInterval = setInterval(poll, this.POLLING_INTERVAL);
+    
+    // Do initial poll immediately
+    poll();
   }
 
   /**
